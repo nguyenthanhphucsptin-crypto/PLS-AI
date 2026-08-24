@@ -125,9 +125,9 @@ def generate_ai_response(user_prompt, current_messages):
     genai.configure(api_key=api_keys[0])
     
     # ---------------------------------------------------------
-    # CHỈ ĐỊNH CỐ ĐỊNH MÔ HÌNH ỔN ĐỊNH NHẤT
+    # CHỈ ĐỊNH CỐ ĐỊNH MÔ HÌNH ỔN ĐỊNH NHẤT (Loại bỏ hoàn toàn gemini-pro)
     # ---------------------------------------------------------
-    danh_sach_mo_hinh = ["gemini-1.5-flash", "gemini-pro"]
+    danh_sach_mo_hinh = ["gemini-2.0-flash", "gemini-1.5-flash"]
     
     last_error = None
     
@@ -136,7 +136,7 @@ def generate_ai_response(user_prompt, current_messages):
             try:
                 model = genai.GenerativeModel(model_name=ten_mo_hinh, system_instruction=instruction)
             except:
-                # Nếu thư viện quá cũ
+                # Dành cho phiên bản thư viện cũ không hỗ trợ system_instruction
                 model = genai.GenerativeModel(model_name=ten_mo_hinh)
                 
             chat = model.start_chat(history=formatted_history)
@@ -146,7 +146,7 @@ def generate_ai_response(user_prompt, current_messages):
             last_error = e
             continue
             
-    raise Exception(f"Lỗi rồi, bạn kiểm tra lại API nha: {last_error}")
+    raise Exception(f"Lỗi kết nối với máy chủ AI, bạn kiểm tra lại API nha: {last_error}")
 
 # ==========================================
 # 5. KHUNG HỘI THOẠI MAIN
