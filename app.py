@@ -10,7 +10,6 @@ st.set_page_config(page_title="Trợ lý AI - PLS", page_icon="🎀", layout="wi
 st.markdown("<h2 style='text-align: center; color: #FF8C94;'>🧸 Trợ Lý Học Tập PLS 🎀</h2>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; font-style: italic; color: #555555;'>Người bạn đồng hành siêu đáng yêu của bạn trên hành trình tri thức!</p>", unsafe_allow_html=True)
 
-# Khắc phục lỗi IndentationError: Ghi liền mạch không lùi lề
 welcome_message = """✨ **PLS xin chào bạn!** ✨
 
 Hôm nay bạn thế nào rồi, đi học có mệt lắm không? 🌷 Cần mình hỗ trợ giải bài tập môn nào, hướng dẫn dùng Notion, hay đơn giản là có tâm sự gì khó nói thì cứ nhắn ngay nha. Mình luôn ở đây sẵn sàng lắng nghe và giúp đỡ bạn hết mình! 💖"""
@@ -124,9 +123,9 @@ def generate_ai_response(user_prompt, current_messages):
     genai.configure(api_key=api_keys[0])
     
     # ---------------------------------------------------------
-    # CHỈ ĐỊNH CỐ ĐỊNH DUY NHẤT 1 MÔ HÌNH: GEMINI-2.0-FLASH (XOÁ HẲN 1.5)
+    # DÙNG DUY NHẤT BẢN MỚI NHẤT MÀ GOOGLE YÊU CẦU: GEMINI-3.6-FLASH
     # ---------------------------------------------------------
-    danh_sach_mo_hinh = ["gemini-2.0-flash"]
+    danh_sach_mo_hinh = ["gemini-3.6-flash"]
     
     last_error = None
     
@@ -135,7 +134,6 @@ def generate_ai_response(user_prompt, current_messages):
             try:
                 model = genai.GenerativeModel(model_name=ten_mo_hinh, system_instruction=instruction)
             except:
-                # Dành cho phiên bản thư viện cũ không hỗ trợ system_instruction
                 model = genai.GenerativeModel(model_name=ten_mo_hinh)
                 
             chat = model.start_chat(history=formatted_history)
