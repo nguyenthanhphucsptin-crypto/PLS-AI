@@ -3,7 +3,7 @@ import google.generativeai as genai
 from datetime import datetime
 
 # ==========================================
-# 1. CẤU HÌNH GIAO DIỆN SIÊU DỄ THƯƠNG
+# 1. CẤU HÌNH GIAO DIỆN
 # ==========================================
 st.set_page_config(page_title="Trợ lý AI - PLS", page_icon="🎀", layout="wide")
 
@@ -34,7 +34,7 @@ if "chat_count" not in st.session_state:
     st.session_state.chat_count = 1
 
 # ==========================================
-# 3. SIDEBAR (THÔNG TIN & LỊCH SỬ)
+# 3. SIDEBAR
 # ==========================================
 with st.sidebar:
     st.markdown("### 💌 Hỗ Trợ Kỹ Thuật")
@@ -82,7 +82,7 @@ with st.sidebar:
             st.rerun()
 
 # ==========================================
-# 4. CẤU HÌNH AI (ĐÃ FIX TẬN GỐC LỖI 404 & 429)
+# 4. CẤU HÌNH AI (TỰ ĐỘNG TÌM MÔ HÌNH HOẠT ĐỘNG ĐƯỢC)
 # ==========================================
 now = datetime.now()
 days_vi = {"Monday": "Thứ Hai", "Tuesday": "Thứ Ba", "Wednesday": "Thứ Tư", "Thursday": "Thứ Năm", "Friday": "Thứ Sáu", "Saturday": "Thứ Bảy", "Sunday": "Chủ Nhật"}
@@ -104,7 +104,7 @@ for k in ["GOOGLE_API_KEY", "GOOGLE_API_KEY_1", "GOOGLE_API_KEY_2", "GOOGLE_API_
         api_keys.append(val)
 
 if not api_keys:
-    st.error("Chưa cài API Key trong Secrets trên Streamlit Cloud! 😭")
+    st.error("Chưa cài API Key trong Secrets!")
     st.stop()
 
 def generate_ai_response(user_prompt, current_messages):
@@ -119,33 +119,43 @@ def generate_ai_response(user_prompt, current_messages):
             role = "user" if msg["role"] == "user" else "model"
             formatted_history.append({"role": role, "parts": [msg["content"]]})
 
-    # ĐÃ XÓA CÁC MODEL BÁO LỖI, CHỈ DÙNG 2 MODEL CHUẨN NHẤT CỦA GOOGLE
-    models_to_try = [
-        "gemini-1.5-flash",
-        "gemini-pro"
-    ]
+    genai.configure(api_key=api_keys[0])
+    
+    # ---------------------------------------------------------
+    # BƯỚC ĐỘT PHÁ: HỎI GOOGLE XEM CÓ MÔ HÌNH NÀO DÙNG ĐƯỢC KHÔNG
+    # ---------------------------------------------------------
+    danh_sach_mo_hinh = []
+    try:
+        for m in genai.list_models():
+            if 'generateContent' in m.supported_generation_methods:
+                if "gemini" in m.name.lower() and "vision" not in m.name.lower():
+                    danh_sach_mo_hinh.append(m.name)
+    except Exception as e:
+        # Nếu thư viện quá cũ không hỗ trợ list_models, dùng tên cơ bản nhất mọi thời đại
+        danh_sach_mo_hinh = ["gemini-pro"]
+        
+    if not danh_sach_mo_hinh:
+        danh_sach_mo_hinh = ["gemini-pro"]
 
     last_error = None
-    for key in api_keys:
-        genai.configure(api_key=key)
-        for m_name in models_to_try:
+    
+    # Vòng lặp: Cứ lôi từng mô hình có thật ra thử, cái nào chạy được thì trả kết quả luôn
+    for ten_mo_hinh in danh_sach_mo_hinh:
+        try:
             try:
-                # Cố gắng gắn tính cách vào, nếu thư viện trên Streamlit không chịu thì bỏ qua để tránh lỗi
-                try:
-                    model = genai.GenerativeModel(model_name=m_name, system_instruction=instruction)
-                except Exception:
-                    model = genai.GenerativeModel(model_name=m_name)
-                    
-                chat = model.start_chat(history=formatted_history)
-                response = chat.send_message(user_prompt)
-                return response.text
-            except Exception as e:
-                last_error = e
-                # Nếu bị hết lượt (429) hoặc không tìm thấy (404), âm thầm chạy tiếp vòng lặp
-                continue
-
-    # Nếu thử hết mọi cách vẫn lỗi, báo câu thân thiện
-    raise Exception("Huhu, Google API của chúng ta hôm nay mệt rồi, bị từ chối kết nối. Bạn thử tạo 1 API Key mới toanh bỏ vào xem sao nha!")
+                model = genai.GenerativeModel(model_name=ten_mo_hinh, system_instruction=instruction)
+            except:
+                model = genai.GenerativeModel(model_name=ten_mo_hinh)
+                
+            chat = model.start_chat(history=formatted_history)
+            response = chat.send_message(user_prompt)
+            return response.text
+        except Exception as e:
+            last_error = e
+            continue
+            
+    # Nếu xui xẻo đến mức tất cả đều tạch (thường là do API bị khóa 429), nó mới báo lỗi
+    raise Exception(f"Đã quét và thử hết các mô hình nhưng vẫn lỗi, bạn cần tạo API Key mới rồi: {last_error}")
 
 # ==========================================
 # 5. KHUNG HỘI THOẠI MAIN
