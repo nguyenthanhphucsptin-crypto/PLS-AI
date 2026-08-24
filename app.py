@@ -18,57 +18,73 @@ Hôm nay bạn thế nào rồi, đi học có mệt lắm không? 🌷 Cần m�
 """
 
 # ==========================================
-# 2. KHỞI TẠO BỘ NHỚ LƯU TRỮ NHIỀU ĐOẠN CHAT
+# 2. KHỞI TẠO BỘ NHỚ LƯU LỊCH SỬ CHAT
 # ==========================================
-# Tạo một cuốn sổ lưu tất cả các đoạn chat
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = {"Đoạn chat 1": [{"role": "assistant", "content": welcome_message}]}
+if "chats" not in st.session_state:
+    st.session_state.chats = {
+        "chat_1": {
+            "title": "🌸 Mở đầu cuộc gọi",
+            "messages": [{"role": "assistant", "content": welcome_message}]
+        }
+    }
 
-# Theo dõi xem người dùng đang mở đoạn chat nào
-if "current_chat_name" not in st.session_state:
-    st.session_state.current_chat_name = "Đoạn chat 1"
+if "active_chat_id" not in st.session_state:
+    st.session_state.active_chat_id = "chat_1"
 
-# Bộ đếm số lượng đoạn chat đã tạo
-if "chat_counter" not in st.session_state:
-    st.session_state.chat_counter = 1
+if "chat_count" not in st.session_state:
+    st.session_state.chat_count = 1
 
 # ==========================================
-# 3. THANH SIDEBAR (MENU BÊN TRÁI)
+# 3. THANH SIDEBAR (ĐÃ ĐIỀU CHỈNH THEO YÊU CẦU)
 # ==========================================
 with st.sidebar:
+    # 🌟 PHẦN 1: THÔNG TIN HỖ TRỢ VIP PRO (NẰM Ở TRÊN CÙNG)
+    st.markdown("### 💌 Hỗ Trợ Kỹ Thuật")
+    st.markdown("Nếu hệ thống gặp lỗi hoặc cần hướng dẫn thêm, bạn liên hệ thầy nha:")
+    st.markdown("---")
+    st.markdown("👨‍💻 **Nguyễn Thanh Phúc**")
+    st.markdown("📞 **SĐT:** 0367102957")
+    st.markdown("📧 **Email:** nguyenthanhphuc.sptin@gmail.com")
+    st.markdown("🏫 **Chuyên ngành:** Sư Phạm Tin Học")
+    st.markdown("🏛️ **Trường Sư Phạm - Đại Học Cần Thơ**")
+    st.markdown("---")
+    st.markdown("🌟 *Thuộc dự án Hệ thống quản lý học tập PLS*")
+    
+    st.markdown("---")
     st.markdown("### 💬 Lịch sử trò chuyện")
     
-    # Nút Tạo đoạn chat mới
-    if st.button("➕ Tạo đoạn chat mới", use_container_width=True):
-        st.session_state.chat_counter += 1
-        new_name = f"Đoạn chat {st.session_state.chat_counter}"
-        # Tạo phòng chat mới với lời chào mặc định
-        st.session_state.chat_history[new_name] = [{"role": "assistant", "content": welcome_message}]
-        # Chuyển sang phòng chat vừa tạo
-        st.session_state.current_chat_name = new_name
-        st.rerun() # Tải lại trang để cập nhật giao diện
+    # 💬 PHẦN 2: DANH SÁCH LỊCH SỬ (TỰ ĐỔI TÊN THEO CÂU HỎI)
+    for chat_id, chat_data in st.session_state.chats.items():
+        is_active = (chat_id == st.session_state.active_chat_id)
+        icon = "👉" if is_active else "💭"
+        btn_label = f"{icon} {chat_data['title']}"
         
-    st.markdown("---")
-    st.markdown("**Các cuộc trò chuyện:**")
-    
-    # Hiển thị danh sách các đoạn chat dưới dạng nút bấm
-    for chat_name in list(st.session_state.chat_history.keys()):
-        # Thêm icon 👉 để biết đang ở phòng chat nào
-        prefix = "👉" if chat_name == st.session_state.current_chat_name else "💭"
-        if st.button(f"{prefix} {chat_name}", key=f"btn_{chat_name}", use_container_width=True):
-            st.session_state.current_chat_name = chat_name
+        if st.button(btn_label, key=f"btn_{chat_id}", use_container_width=True):
+            st.session_state.active_chat_id = chat_id
             st.rerun()
-            
-    st.markdown("---")
+
+    st.markdown("<br>", unsafe_allow_html=True)
     
-    # Nút Xóa lịch sử cuộc trò chuyện HIỆN TẠI
-    if st.button("🗑️ Xóa sạch chat hiện tại", type="primary", use_container_width=True):
-        st.session_state.chat_history[st.session_state.current_chat_name] = [{"role": "assistant", "content": welcome_message}]
-        st.rerun()
-        
-    st.markdown("---")
-    st.markdown("### 💌 Hỗ Trợ Kỹ Thuật")
-    st.markdown("👨‍💻 **Nguyễn Thanh Phúc**\n\n📞 **SĐT:** 0367102957\n\n🏫 **Đại Học Cần Thơ**")
+    # ⚙️ PHẦN 3: 2 NÚT THAO TÁC NẰM NGANG NHAU Ở DƯỚI
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if st.button("➕ Chat mới", use_container_width=True):
+            st.session_state.chat_count += 1
+            new_id = f"chat_{st.session_state.chat_count}"
+            st.session_state.chats[new_id] = {
+                "title": f"Trò chuyện {st.session_state.chat_count}",
+                "messages": [{"role": "assistant", "content": welcome_message}]
+            }
+            st.session_state.active_chat_id = new_id
+            st.rerun()
+
+    with col2:
+        if st.button("🗑️ Xóa chat", type="primary", use_container_width=True):
+            current_id = st.session_state.active_chat_id
+            st.session_state.chats[current_id]["messages"] = [{"role": "assistant", "content": welcome_message}]
+            st.session_state.chats[current_id]["title"] = "🌸 Cuộc trò chuyện mới"
+            st.rerun()
 
 # ==========================================
 # 4. CẤU HÌNH AI & TÍNH NĂNG TỰ ĐỔI KEY DỰ PHÒNG
@@ -97,11 +113,9 @@ if not api_keys:
     st.error("Trùi ui, chưa được cấp API Key rồi!")
     st.stop()
 
-# Hàm AI gửi tin nhắn thông minh
 def generate_response_with_fallback(user_prompt, current_messages):
     formatted_history = []
-    # Đọc lại lịch sử của riêng phòng chat hiện tại để AI nhớ
-    for msg in current_messages[:-1]: # Bỏ qua câu hỏi vừa hỏi
+    for msg in current_messages[:-1]:
         if msg["role"] == "user":
             formatted_history.append({"role": "user", "parts": [msg["content"]]})
         elif msg["role"] == "assistant":
@@ -122,19 +136,24 @@ def generate_response_with_fallback(user_prompt, current_messages):
     raise last_error
 
 # ==========================================
-# 5. HIỂN THỊ KHUNG CHAT (Của đoạn chat đang chọn)
+# 5. HIỂN THỊ KHUNG CHAT
 # ==========================================
-# Lấy danh sách tin nhắn của phòng chat hiện tại
-current_messages = st.session_state.chat_history[st.session_state.current_chat_name]
+current_chat = st.session_state.chats[st.session_state.active_chat_id]
+current_messages = current_chat["messages"]
 
-# In các tin nhắn cũ ra màn hình
+# In các tin nhắn cũ
 for message in current_messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
 # Khi người dùng nhập tin nhắn mới
 if prompt := st.chat_input("Nhắn tin cho mình ở đây nha... ⌨️"):
-    # Lưu vào danh sách
+    # TỰ ĐỘNG ĐỔI TÊN TIÊU ĐỀ LỊCH SỬ CHAT THEO CÂU HỎI ĐẦU TIÊN
+    if len(current_messages) == 1:
+        clean_prompt = prompt.strip().replace("\n", " ")
+        short_title = clean_prompt[:18] + "..." if len(clean_prompt) > 18 else clean_prompt
+        current_chat["title"] = short_title
+
     current_messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
@@ -142,9 +161,9 @@ if prompt := st.chat_input("Nhắn tin cho mình ở đây nha... ⌨️"):
     with st.chat_message("assistant"):
         with st.spinner("Đợi mình chút xíu nha, mình đang suy nghĩ... 💭"):
             try:
-                # Trả lời dựa trên lịch sử của riêng phòng này
                 answer = generate_response_with_fallback(prompt, current_messages)
                 st.markdown(answer)
                 current_messages.append({"role": "assistant", "content": answer})
+                st.rerun() # Tải lại trang để cập nhật tiêu đề đoạn chat ở Sidebar ngay lập tức
             except Exception as e:
                 st.error(f"Huhu mình bị lỗi mất rồi: {e}")
