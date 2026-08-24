@@ -46,9 +46,9 @@ Bạn là một trợ lý AI thông minh, một người bạn đồng hành và
   3. Phương pháp học tập: Nếu cần, hãy gợi ý cho bạn ấy các phương pháp học hiệu quả như Pomodoro, Active Recall hoặc cách dùng Notion để quản lý thời gian.
 """
 
-# Đã cập nhật mô hình mới gemini-2.5-flash
+# Đã cập nhật mô hình mới nhất theo yêu cầu của Google: gemini-3.6-flash
 model = genai.GenerativeModel(
-    model_name="gemini-2.5-flash", system_instruction=instruction
+    model_name="gemini-3.6-flash", system_instruction=instruction
 )
 
 # ==========================================
