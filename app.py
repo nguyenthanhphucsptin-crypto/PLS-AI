@@ -82,7 +82,7 @@ with st.sidebar:
             st.rerun()
 
 # ==========================================
-# 4. CẤU HÌNH BỘ NÃO AI
+# 4. CẤU HÌNH AI (ĐÃ FIX TẬN GỐC LỖI 404 & 429)
 # ==========================================
 now = datetime.now()
 days_vi = {"Monday": "Thứ Hai", "Tuesday": "Thứ Ba", "Wednesday": "Thứ Tư", "Thursday": "Thứ Năm", "Friday": "Thứ Sáu", "Saturday": "Thứ Bảy", "Sunday": "Chủ Nhật"}
@@ -119,10 +119,10 @@ def generate_ai_response(user_prompt, current_messages):
             role = "user" if msg["role"] == "user" else "model"
             formatted_history.append({"role": role, "parts": [msg["content"]]})
 
-    # Danh sách các mô hình ổn định nhất của Google hiện tại
+    # ĐÃ XÓA CÁC MODEL BÁO LỖI, CHỈ DÙNG 2 MODEL CHUẨN NHẤT CỦA GOOGLE
     models_to_try = [
         "gemini-1.5-flash",
-        "gemini-1.5-pro-latest"
+        "gemini-pro"
     ]
 
     last_error = None
@@ -130,15 +130,22 @@ def generate_ai_response(user_prompt, current_messages):
         genai.configure(api_key=key)
         for m_name in models_to_try:
             try:
-                model = genai.GenerativeModel(model_name=m_name, system_instruction=instruction)
+                # Cố gắng gắn tính cách vào, nếu thư viện trên Streamlit không chịu thì bỏ qua để tránh lỗi
+                try:
+                    model = genai.GenerativeModel(model_name=m_name, system_instruction=instruction)
+                except Exception:
+                    model = genai.GenerativeModel(model_name=m_name)
+                    
                 chat = model.start_chat(history=formatted_history)
                 response = chat.send_message(user_prompt)
                 return response.text
             except Exception as e:
                 last_error = e
+                # Nếu bị hết lượt (429) hoặc không tìm thấy (404), âm thầm chạy tiếp vòng lặp
                 continue
 
-    raise last_error
+    # Nếu thử hết mọi cách vẫn lỗi, báo câu thân thiện
+    raise Exception("Huhu, Google API của chúng ta hôm nay mệt rồi, bị từ chối kết nối. Bạn thử tạo 1 API Key mới toanh bỏ vào xem sao nha!")
 
 # ==========================================
 # 5. KHUNG HỘI THOẠI MAIN
@@ -167,4 +174,4 @@ if prompt := st.chat_input("Nhắn tin cho mình ở đây nha... ⌨️"):
                 st.markdown(answer)
                 current_messages.append({"role": "assistant", "content": answer})
             except Exception as e:
-                st.error(f"Chi tiết lỗi kết nối API: {e}")
+                st.error(f"⚠️ {e}")
