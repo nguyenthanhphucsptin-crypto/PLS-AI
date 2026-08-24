@@ -82,7 +82,7 @@ with st.sidebar:
             st.rerun()
 
 # ==========================================
-# 4. CẤU HÌNH AI (TỰ ĐỘNG CHUYỂN MODEL KHI HẾT QUOTA)
+# 4. CẤU HÌNH BỘ NÃO AI
 # ==========================================
 now = datetime.now()
 days_vi = {"Monday": "Thứ Hai", "Tuesday": "Thứ Ba", "Wednesday": "Thứ Tư", "Thursday": "Thứ Năm", "Friday": "Thứ Sáu", "Saturday": "Thứ Bảy", "Sunday": "Chủ Nhật"}
@@ -119,12 +119,10 @@ def generate_ai_response(user_prompt, current_messages):
             role = "user" if msg["role"] == "user" else "model"
             formatted_history.append({"role": role, "parts": [msg["content"]]})
 
-    # Ưu tiên gemini-3.6-flash, nếu đụng trần 20 câu/ngày thì tự chuyển sang phiên bản khác
+    # Danh sách các mô hình ổn định nhất của Google hiện tại
     models_to_try = [
-        "gemini-3.6-flash",
         "gemini-1.5-flash",
-        "gemini-2.0-flash",
-        "gemini-1.5-pro"
+        "gemini-1.5-pro-latest"
     ]
 
     last_error = None
@@ -132,17 +130,13 @@ def generate_ai_response(user_prompt, current_messages):
         genai.configure(api_key=key)
         for m_name in models_to_try:
             try:
-                try:
-                    model = genai.GenerativeModel(model_name=m_name, system_instruction=instruction)
-                except Exception:
-                    model = genai.GenerativeModel(model_name=m_name)
-                    
+                model = genai.GenerativeModel(model_name=m_name, system_instruction=instruction)
                 chat = model.start_chat(history=formatted_history)
                 response = chat.send_message(user_prompt)
                 return response.text
             except Exception as e:
                 last_error = e
-                continue # Nếu bị lỗi 429 quá tải, tự lẳng lặng nhảy sang model tiếp theo ngay lập tức
+                continue
 
     raise last_error
 
@@ -173,4 +167,4 @@ if prompt := st.chat_input("Nhắn tin cho mình ở đây nha... ⌨️"):
                 st.markdown(answer)
                 current_messages.append({"role": "assistant", "content": answer})
             except Exception as e:
-                st.error(f"⚠️ Hệ thống đang quá tải, bạn chờ vài giây rồi nhắn lại nha: {e}")
+                st.error(f"Chi tiết lỗi kết nối API: {e}")
