@@ -34,10 +34,10 @@ if "chat_count" not in st.session_state:
     st.session_state.chat_count = 1
 
 # ==========================================
-# 3. SIDEBAR (ĐỦ 3 PHẦN CHUẨN YÊU CẦU)
+# 3. SIDEBAR (ĐỦ 3 PHẦN ĐÚNG CẤU TRÚC YÊU CẦU)
 # ==========================================
 with st.sidebar:
-    # 🌟 PHẦN 1: THÔNG TIN HỖ TRỢ TRÊN CÙNG
+    # 🌟 PHẦN 1: THÔNG TIN HỖ TRỢ VIP PRO (TRÊN CÙNG)
     st.markdown("### 💌 Hỗ Trợ Kỹ Thuật")
     st.markdown("Nếu hệ thống gặp lỗi hoặc cần hướng dẫn thêm, bạn liên hệ thầy nha:")
     st.markdown("---")
@@ -52,7 +52,7 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("### 💬 Lịch sử trò chuyện")
     
-    # 💬 PHẦN 2: DANH SÁCH ĐOẠN CHAT (TỰ ĐỔI TÊN THEO CÂU HỎI)
+    # 💬 PHẦN 2: DANH SÁCH CÁC ĐOẠN CHAT (TỰ ĐỔI TÊN THEO CÂU HỎI)
     for chat_id, chat_data in list(st.session_state.chats.items()):
         is_active = (chat_id == st.session_state.active_chat_id)
         icon = "👉" if is_active else "💭"
@@ -85,7 +85,7 @@ with st.sidebar:
             st.rerun()
 
 # ==========================================
-# 4. CẤU HÌNH AI DÒ MÔ HÌNH TỰ ĐỘNG
+# 4. CẤU HÌNH AI VÀ THỜI GIAN THỰC
 # ==========================================
 now = datetime.now()
 days_vi = {"Monday": "Thứ Hai", "Tuesday": "Thứ Ba", "Wednesday": "Thứ Tư", "Thursday": "Thứ Năm", "Friday": "Thứ Sáu", "Saturday": "Thứ Bảy", "Sunday": "Chủ Nhật"}
@@ -95,10 +95,11 @@ thoi_gian_thuc = f"{thu_hom_nay}, ngày {now.strftime('%d/%m/%Y, %H:%M:%S')}"
 instruction = f"""
 Bạn là một trợ lý AI thông minh, một người bạn đồng hành và một gia sư nhiệt tình của hệ thống quản lý học tập cá nhân PLS.
 - CÁCH XƯNG HÔ: Luôn xưng là "mình" và gọi người dùng là "bạn". 
-- NGÔN NGỮ BẮT BUỘC: 100% tiếng Việt chuẩn. Tuyệt đối KHÔNG chèn chữ Hán, chữ Nôm.
-- THỜI GIAN HIỆN TẠI: Hôm nay là {thoi_gian_thuc}.
+- NGÔN NGỮ BẮT BUỘC: 100% tiếng Việt chuẩn. Tuyệt đối KHÔNG chèn chữ Hán, chữ Nôm hay các ký tự ngoại ngữ lạ.
+- THỜI GIAN HIỆN TẠI: Hôm nay là {thoi_gian_thuc}. Dùng thông tin này để tính toán chính xác thứ/ngày/tháng khi người dùng hỏi.
 - TÍNH CÁCH: Ngôn ngữ tự nhiên, nhẹ nhàng, lịch sự, siêu đáng yêu và mang năng lượng chữa lành.
 - NĂNG LỰC CHUYÊN MÔN: Hỗ trợ giải đáp kiến thức cho TẤT CẢ các môn học phổ thông.
+- KỸ NĂNG SƯ PHẠM: Khuyến khích & Lắng nghe, Giải thích từng bước, Gợi ý phương pháp học tập hiệu quả.
 """
 
 api_keys = []
@@ -108,31 +109,8 @@ for k in ["GOOGLE_API_KEY", "GOOGLE_API_KEY_1", "GOOGLE_API_KEY_2", "GOOGLE_API_
         api_keys.append(val)
 
 if not api_keys:
-    st.error("Trùi ui, chưa được cấp API Key rồi! Bạn kiểm tra lại Secrets nha 😭")
+    st.error("Trùi ui, chưa được cấp API Key rồi! Bạn kiểm tra lại phần Secrets trên Streamlit nha 😭")
     st.stop()
-
-# THUẬT TOÁN TỰ DÒ MÔ HÌNH HOẠT ĐỘNG (KHÔNG BAO GIỜ BỊ LỖI 404)
-def get_working_model(key):
-    genai.configure(api_key=key)
-    
-    # 1. Thử các mô hình phổ biến hiện nay
-    for model_name in ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"]:
-        try:
-            m = genai.GenerativeModel(model_name=model_name, system_instruction=instruction)
-            return m
-        except Exception:
-            continue
-
-    # 2. Nếu không được, tự hỏi Google danh sách mô hình đang sống
-    try:
-        for m in genai.list_models():
-            if "generateContent" in m.supported_generation_methods:
-                return genai.GenerativeModel(model_name=m.name, system_instruction=instruction)
-    except Exception:
-        pass
-
-    # 3. Phương án cuối cùng
-    return genai.GenerativeModel(model_name="gemini-1.5-flash", system_instruction=instruction)
 
 def generate_ai_response(user_prompt, current_messages):
     formatted_history = []
@@ -143,8 +121,10 @@ def generate_ai_response(user_prompt, current_messages):
     last_error = None
     for key in api_keys:
         try:
-            model_obj = get_working_model(key)
-            chat = model_obj.start_chat(history=formatted_history)
+            genai.configure(api_key=key)
+            # DÙNG CHÍNH XÁC GEMINI-3.6-FLASH DỰA TRÊN CẤU HÌNH CỦA BẠN
+            model = genai.GenerativeModel(model_name="gemini-3.6-flash", system_instruction=instruction)
+            chat = model.start_chat(history=formatted_history)
             response = chat.send_message(user_prompt)
             return response.text
         except Exception as e:
@@ -163,6 +143,7 @@ for message in current_messages:
         st.markdown(message["content"])
 
 if prompt := st.chat_input("Nhắn tin cho mình ở đây nha... ⌨️"):
+    # Đổi tiêu đề đoạn chat theo câu hỏi đầu tiên
     if len(current_messages) == 1:
         clean_prompt = prompt.strip().replace("\n", " ")
         short_title = clean_prompt[:18] + "..." if len(clean_prompt) > 18 else clean_prompt
@@ -181,6 +162,6 @@ if prompt := st.chat_input("Nhắn tin cho mình ở đây nha... ⌨️"):
             except Exception as e:
                 err_str = str(e)
                 if "429" in err_str or "quota" in err_str.lower():
-                    st.warning("⏳ Trùi ui, mình đang trả lời hơi nhanh nên bị quá tải chút xíu! Bạn đợi khoảng 15-30 giây rồi nhắn lại giúp mình nha 💖")
+                    st.warning("⏳ Trùi ui, hệ thống đang bận một chút! Bạn chờ khoảng 15-30 giây rồi nhắn lại giúp mình nha 💖")
                 else:
                     st.error(f"Huhu mình bị lỗi mất rồi: {e}")
