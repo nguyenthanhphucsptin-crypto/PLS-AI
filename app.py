@@ -4,7 +4,7 @@ import google.generativeai as genai
 # ==========================================
 # 1. CẤU HÌNH GIAO DIỆN SIÊU DỄ THƯƠNG
 # ==========================================
-st.set_page_title("Trợ lý AI - PLS", page_icon="🎀")
+st.set_page_config(page_title="Trợ lý AI - PLS", page_icon="🎀")
 
 # Tiêu đề chính của Web
 st.markdown("<h2 style='text-align: center; color: #FF8C94;'>🧸 Trợ Lý Học Tập PLS 🎀</h2>", unsafe_allow_html=True)
