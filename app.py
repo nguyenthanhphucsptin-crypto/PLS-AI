@@ -80,7 +80,7 @@ with st.sidebar:
             st.rerun()
 
 # ==========================================
-# 4. CẤU HÌNH AI & MÚI GIỜ VIỆT NAM
+# 4. CẤU HÌNH AI DYNAMIC & MÚI GIỜ VIỆT NAM
 # ==========================================
 tz_vn = timezone(timedelta(hours=7))
 now = datetime.now(tz_vn)
@@ -89,21 +89,35 @@ days_vi = {"Monday": "Thứ Hai", "Tuesday": "Thứ Ba", "Wednesday": "Thứ Tư
 thu_hom_nay = days_vi.get(now.strftime("%A"), "")
 thoi_gian_thuc = f"{thu_hom_nay}, ngày {now.strftime('%d/%m/%Y, %H:%M:%S')}"
 
-instruction = f"""
-Bạn là một trợ lý AI thông minh, một người bạn đồng hành và một gia sư nhiệt tình của hệ thống quản lý học tập cá nhân PLS.
-- CÁCH XƯNG HÔ: Luôn xưng là "mình" và gọi người dùng là "bạn". 
-- THỜI GIAN HIỆN TẠI: Hôm nay là {thoi_gian_thuc}.
-- TÍNH CÁCH: Ngôn ngữ tự nhiên, nhẹ nhàng, lịch sự, siêu đáng yêu và mang năng lượng chữa lành. TRẢ LỜI NGẮN GỌN VÀ ĐÚNG TRỌNG TÂM, KHÔNG HIỂN THỊ CÁC BƯỚC SUY NGHĨ.
-- NĂNG LỰC CHUYÊN MÔN: Hỗ trợ giải đáp kiến thức cho TẤT CẢ các môn học phổ thông. Đóng vai trò là một gia sư.
-- LƯU Ý QUAN TRỌNG: Nếu người dùng hỏi về các sự kiện chính trị, thời sự hoặc những nhân vật ngoài phạm vi kiến thức học đường, hãy khéo léo từ chối và nhắc họ rằng bạn là trợ lý học tập.
-"""
+# Tối giản hóa lệnh hệ thống để AI không lải nhải
+instruction = f"""Bạn là trợ lý AI học tập của hệ thống PLS.
+- Thời gian hiện tại: {thoi_gian_thuc}.
+- Xưng hô: xưng "mình" và gọi người dùng là "bạn".
+- Tính cách: Dễ thương, ngắn gọn, súc tích, đi thẳng vào vấn đề. TUYỆT ĐỐI KHÔNG hiển thị các bước suy nghĩ nội bộ (internal thoughts/drafts). 
+- Nhiệm vụ: Trở thành gia sư giải đáp bài tập. Khéo léo từ chối mọi câu hỏi liên quan đến thời sự, chính trị hoặc các nhân vật ngoài luồng giáo dục."""
 
-# Lấy duy nhất API Key đầu tiên cho ổn định
 if "GOOGLE_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 else:
     st.error("⚠️ Chưa cài GOOGLE_API_KEY trong Secrets!")
     st.stop()
+
+def get_dynamic_model():
+    """Tự động hỏi máy chủ xem API key này được phép xài model nào để tránh lỗi 404"""
+    try:
+        available = [m.name.replace("models/", "") for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+        # Ưu tiên kiếm bản flash, không lấy bản phân tích hình ảnh (vision)
+        for name in available:
+            if "flash" in name.lower() and "vision" not in name.lower():
+                return name
+        for name in available:
+            if "pro" in name.lower() and "vision" not in name.lower():
+                return name
+        if available:
+            return available[0]
+    except Exception:
+        pass
+    return "gemini-pro" # Bước đường cùng
 
 def generate_ai_response(user_prompt, current_messages):
     formatted_history = []
@@ -112,16 +126,17 @@ def generate_ai_response(user_prompt, current_messages):
     for msg in current_messages[:-1]:
         if msg["role"] == "user":
             has_user_started = True
-            
         if has_user_started:
             role = "user" if msg["role"] == "user" else "model"
             formatted_history.append({"role": role, "parts": [msg["content"]]})
 
-    # CỐ ĐỊNH CHUẨN: BẢN 1.5 FLASH (Tuyệt đối không đổi)
+    # Lấy tên model tự động 
+    chot_model = get_dynamic_model()
+    
     try:
-        model = genai.GenerativeModel(model_name="gemini-1.5-flash", system_instruction=instruction)
+        model = genai.GenerativeModel(model_name=chot_model, system_instruction=instruction)
     except:
-        model = genai.GenerativeModel(model_name="gemini-1.5-flash")
+        model = genai.GenerativeModel(model_name=chot_model)
             
     chat = model.start_chat(history=formatted_history)
     response = chat.send_message(user_prompt)
