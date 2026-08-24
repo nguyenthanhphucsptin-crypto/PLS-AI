@@ -82,7 +82,7 @@ with st.sidebar:
             st.rerun()
 
 # ==========================================
-# 4. THUẬT TOÁN AI "BẤT TỬ" (KHÔNG SỢ LỖI THƯ VIỆN CŨ)
+# 4. CẤU HÌNH AI & TỰ ĐỘNG TÌM MODEL CHUẨN TỪ GOOGLE
 # ==========================================
 now = datetime.now()
 days_vi = {"Monday": "Thứ Hai", "Tuesday": "Thứ Ba", "Wednesday": "Thứ Tư", "Thursday": "Thứ Năm", "Friday": "Thứ Sáu", "Saturday": "Thứ Bảy", "Sunday": "Chủ Nhật"}
@@ -105,10 +105,10 @@ for k in ["GOOGLE_API_KEY", "GOOGLE_API_KEY_1", "GOOGLE_API_KEY_2", "GOOGLE_API_
         api_keys.append(val)
 
 if not api_keys:
-    st.error("Chưa cấu hình API Key! 😭")
+    st.error("Chưa cấu hình API Key trong Secrets! 😭")
     st.stop()
 
-def generate_ai_response(user_prompt, current_messages):
+def get_active_model_and_response(user_prompt, current_messages):
     formatted_history = []
     has_user_started = False
     
@@ -119,35 +119,39 @@ def generate_ai_response(user_prompt, current_messages):
             role = "user" if msg["role"] == "user" else "model"
             formatted_history.append({"role": role, "parts": [msg["content"]]})
 
-    # Danh sách quét tên mô hình (Lỗi cái này tự nhảy cái khác)
-    model_names_to_try = [
-        "gemini-1.5-flash",
-        "gemini-1.5-pro",
-        "gemini-pro",
-        "gemini-1.0-pro"
-    ]
-
     last_error = None
     for key in api_keys:
-        genai.configure(api_key=key)
-        for m_name in model_names_to_try:
+        try:
+            genai.configure(api_key=key)
+            
+            # TỰ ĐỘNG DÒ TÌM MODEL ĐANG HOẠT ĐỘNG TỪ MÁY CHỦ GOOGLE
+            available_models = [
+                m.name for m in genai.list_models() 
+                if "generateContent" in m.supported_generation_methods
+            ]
+            
+            if not available_models:
+                continue
+                
+            # Ưu tiên mô hình chứa tên flash/pro
+            chosen_model_name = available_models[0]
+            for m_name in available_models:
+                if "flash" in m_name or "pro" in m_name:
+                    chosen_model_name = m_name
+                    break
+
             try:
-                # Cố tình KHÔNG DÙNG system_instruction để tránh lỗi 100%
-                model = genai.GenerativeModel(model_name=m_name)
-                chat = model.start_chat(history=formatted_history)
-                
-                # Gắn tính cách thủ công vào tin nhắn đầu tiên
-                if len(formatted_history) == 0:
-                    final_prompt = f"[HƯỚNG DẪN HỆ THỐNG: {instruction}]\n\nCâu hỏi của người dùng: {user_prompt}"
-                else:
-                    final_prompt = user_prompt
-                    
-                response = chat.send_message(final_prompt)
-                return response.text
-            except Exception as e:
-                last_error = e
-                continue # Nếu lỗi 404, lập tức chạy tiếp vòng lặp thử tên khác
-                
+                model = genai.GenerativeModel(model_name=chosen_model_name, system_instruction=instruction)
+            except Exception:
+                model = genai.GenerativeModel(model_name=chosen_model_name)
+
+            chat = model.start_chat(history=formatted_history)
+            response = chat.send_message(user_prompt)
+            return response.text
+        except Exception as e:
+            last_error = e
+            continue
+
     raise last_error
 
 # ==========================================
@@ -173,8 +177,8 @@ if prompt := st.chat_input("Nhắn tin cho mình ở đây nha... ⌨️"):
     with st.chat_message("assistant"):
         with st.spinner("Đợi mình chút xíu nha, mình đang suy nghĩ... 💭"):
             try:
-                answer = generate_ai_response(prompt, current_messages)
+                answer = get_active_model_and_response(prompt, current_messages)
                 st.markdown(answer)
                 current_messages.append({"role": "assistant", "content": answer})
             except Exception as e:
-                st.error(f"⚠️ Huhu, lỗi hệ thống rồi: {e}")
+                st.error(f"⚠️ Lỗi hệ thống: {e}")
