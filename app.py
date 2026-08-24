@@ -34,7 +34,7 @@ if "chat_count" not in st.session_state:
     st.session_state.chat_count = 1
 
 # ==========================================
-# 3. SIDEBAR (THÔNG TIN VIP PRO & LỊCH SỬ)
+# 3. SIDEBAR (THÔNG TIN & LỊCH SỬ)
 # ==========================================
 with st.sidebar:
     st.markdown("### 💌 Hỗ Trợ Kỹ Thuật")
@@ -82,7 +82,7 @@ with st.sidebar:
             st.rerun()
 
 # ==========================================
-# 4. CẤU HÌNH BỘ NÃO AI 
+# 4. CẤU HÌNH BỘ NÃO AI (TỰ ĐỘNG CHUYỂN MODEL KHI HẾT QUOTA)
 # ==========================================
 now = datetime.now()
 days_vi = {"Monday": "Thứ Hai", "Tuesday": "Thứ Ba", "Wednesday": "Thứ Tư", "Thursday": "Thứ Năm", "Friday": "Thứ Sáu", "Saturday": "Thứ Bảy", "Sunday": "Chủ Nhật"}
@@ -92,7 +92,7 @@ thoi_gian_thuc = f"{thu_hom_nay}, ngày {now.strftime('%d/%m/%Y, %H:%M:%S')}"
 instruction = f"""
 Bạn là một trợ lý AI thông minh, một người bạn đồng hành và một gia sư nhiệt tình của hệ thống quản lý học tập cá nhân PLS.
 - CÁCH XƯNG HÔ: Luôn xưng là "mình" và gọi người dùng là "bạn". 
-- THỜI GIAN HIỆN TẠI: Hôm nay là {thoi_gian_thuc}. Dùng thông tin này để tính toán ngày tháng nếu người dùng hỏi.
+- THỜI GIAN HIỆN TẠI: Hôm nay là {thoi_gian_thuc}.
 - TÍNH CÁCH: Ngôn ngữ tự nhiên, nhẹ nhàng, lịch sự, siêu đáng yêu và mang năng lượng chữa lành.
 - NĂNG LỰC CHUYÊN MÔN: Hỗ trợ giải đáp kiến thức cho TẤT CẢ các môn học phổ thông.
 """
@@ -104,11 +104,10 @@ for k in ["GOOGLE_API_KEY", "GOOGLE_API_KEY_1", "GOOGLE_API_KEY_2", "GOOGLE_API_
         api_keys.append(val)
 
 if not api_keys:
-    st.error("Trùi ui, chưa được cấp API Key rồi! Bạn kiểm tra lại phần Secrets trên Streamlit nha 😭")
+    st.error("Chưa cài API Key trong Secrets trên Streamlit Cloud! 😭")
     st.stop()
 
 def generate_ai_response(user_prompt, current_messages):
-    # Lọc lịch sử để API không báo lỗi
     formatted_history = []
     has_user_started = False
     
@@ -120,22 +119,31 @@ def generate_ai_response(user_prompt, current_messages):
             role = "user" if msg["role"] == "user" else "model"
             formatted_history.append({"role": role, "parts": [msg["content"]]})
 
+    # Ưu tiên gemini-3.6-flash, nếu bị giới hạn lượt 429 thì tự chuyển sang phiên bản khác
+    models_to_try = [
+        "gemini-3.6-flash",
+        "gemini-1.5-flash",
+        "gemini-1.5-pro",
+        "gemini-pro"
+    ]
+
     last_error = None
     for key in api_keys:
-        try:
-            genai.configure(api_key=key)
-            
-            # ĐÚNG YÊU CẦU CỦA BẠN ĐÂY Ạ ❤️
-            model = genai.GenerativeModel(
-                model_name="gemini-3.6-flash", system_instruction=instruction
-            )
-            
-            chat = model.start_chat(history=formatted_history)
-            response = chat.send_message(user_prompt)
-            return response.text
-        except Exception as e:
-            last_error = e
-            continue
+        genai.configure(api_key=key)
+        for m_name in models_to_try:
+            try:
+                try:
+                    model = genai.GenerativeModel(model_name=m_name, system_instruction=instruction)
+                except Exception:
+                    model = genai.GenerativeModel(model_name=m_name)
+                    
+                chat = model.start_chat(history=formatted_history)
+                response = chat.send_message(user_prompt)
+                return response.text
+            except Exception as e:
+                last_error = e
+                continue # Nếu trúng lỗi 429 hết lượt, tự chạy tiếp sang model/key tiếp theo
+                
     raise last_error
 
 # ==========================================
@@ -165,4 +173,4 @@ if prompt := st.chat_input("Nhắn tin cho mình ở đây nha... ⌨️"):
                 st.markdown(answer)
                 current_messages.append({"role": "assistant", "content": answer})
             except Exception as e:
-                st.error(f"⚠️ Huhu, lỗi rồi: {e}")
+                st.error("⚠️ Hôm nay API Key của bạn đã dùng hết lượt miễn phí rồi. Bạn tạo thêm 1 API Key mới bỏ vào Secrets là xong nha!")
