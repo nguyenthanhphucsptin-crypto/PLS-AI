@@ -37,7 +37,6 @@ if "chat_count" not in st.session_state:
 # 3. SIDEBAR (THÔNG TIN VIP PRO & LỊCH SỬ)
 # ==========================================
 with st.sidebar:
-    # 🌟 THÔNG TIN HỖ TRỢ TRÊN CÙNG
     st.markdown("### 💌 Hỗ Trợ Kỹ Thuật")
     st.markdown("Nếu hệ thống gặp lỗi hoặc cần hướng dẫn thêm, bạn liên hệ thầy nha:")
     st.markdown("---")
@@ -52,7 +51,6 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("### 💬 Lịch sử trò chuyện")
     
-    # 💬 DANH SÁCH ĐOẠN CHAT (TỰ ĐỔI TÊN THEO CÂU HỎI)
     for chat_id, chat_data in st.session_state.chats.items():
         is_active = (chat_id == st.session_state.active_chat_id)
         icon = "👉" if is_active else "💭"
@@ -64,7 +62,6 @@ with st.sidebar:
 
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # ⚙️ 2 NÚT THAO TÁC NẰM NGANG
     col1, col2 = st.columns(2)
     with col1:
         if st.button("➕ Chat mới", use_container_width=True):
@@ -85,7 +82,7 @@ with st.sidebar:
             st.rerun()
 
 # ==========================================
-# 4. CẤU HÌNH AI VÀ XỬ LÝ LỖI RATE LIMIT
+# 4. CẤU HÌNH AI VỚI MÔ HÌNH MỚI NHẤT
 # ==========================================
 now = datetime.now()
 days_vi = {"Monday": "Thứ Hai", "Tuesday": "Thứ Ba", "Wednesday": "Thứ Tư", "Thursday": "Thứ Năm", "Friday": "Thứ Sáu", "Saturday": "Thứ Bảy", "Sunday": "Chủ Nhật"}
@@ -109,7 +106,7 @@ for k in ["GOOGLE_API_KEY", "GOOGLE_API_KEY_1", "GOOGLE_API_KEY_2", "GOOGLE_API_
         api_keys.append(val)
 
 if not api_keys:
-    st.error("Trùi ui, chưa được cấp API Key rồi! Bạn kiểm tra lại phần Secrets trên Streamlit nha 😭")
+    st.error("Trùi ui, chưa được cấp API Key rồi! Bạn kiểm tra lại Secrets nha 😭")
     st.stop()
 
 def generate_response_with_fallback(user_prompt, current_messages):
@@ -124,7 +121,7 @@ def generate_response_with_fallback(user_prompt, current_messages):
     for key in api_keys:
         try:
             genai.configure(api_key=key)
-            # Dùng mô hình gemini-1.5-flash siêu ổn định
+            # DÙNG BẢN MỚI NHẤT
             model = genai.GenerativeModel(model_name="gemini-1.5-flash", system_instruction=instruction)
             chat = model.start_chat(history=formatted_history)
             response = chat.send_message(user_prompt)
@@ -146,7 +143,6 @@ for message in current_messages:
         st.markdown(message["content"])
 
 if prompt := st.chat_input("Nhắn tin cho mình ở đây nha... ⌨️"):
-    # Cập nhật tên đoạn chat theo câu hỏi đầu tiên
     if len(current_messages) == 1:
         clean_prompt = prompt.strip().replace("\n", " ")
         short_title = clean_prompt[:18] + "..." if len(clean_prompt) > 18 else clean_prompt
