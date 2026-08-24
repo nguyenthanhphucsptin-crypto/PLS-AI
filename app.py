@@ -3,7 +3,7 @@ import google.generativeai as genai
 from datetime import datetime
 
 # ==========================================
-# 1. CẤU HÌNH GIAO DIỆN SIÊU DỄ THƯƠNG
+# 1. CẤU HÌNH GIAO DIỆN
 # ==========================================
 st.set_page_config(page_title="Trợ lý AI - PLS", page_icon="🎀", layout="wide")
 
@@ -17,7 +17,7 @@ Hôm nay bạn thế nào rồi, đi học có mệt lắm không? 🌷 Cần m�
 """
 
 # ==========================================
-# 2. BỘ NHỚ LƯU LỊCH SỬ CHAT
+# 2. QUẢN LÝ LỊCH SỬ CHAT (SESSION STATE)
 # ==========================================
 if "chats" not in st.session_state:
     st.session_state.chats = {
@@ -34,10 +34,9 @@ if "chat_count" not in st.session_state:
     st.session_state.chat_count = 1
 
 # ==========================================
-# 3. SIDEBAR (ĐỦ 3 PHẦN ĐÚNG CẤU TRÚC YÊU CẦU)
+# 3. SIDEBAR GIAO DIỆN
 # ==========================================
 with st.sidebar:
-    # 🌟 PHẦN 1: THÔNG TIN HỖ TRỢ VIP PRO (TRÊN CÙNG)
     st.markdown("### 💌 Hỗ Trợ Kỹ Thuật")
     st.markdown("Nếu hệ thống gặp lỗi hoặc cần hướng dẫn thêm, bạn liên hệ thầy nha:")
     st.markdown("---")
@@ -52,7 +51,6 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("### 💬 Lịch sử trò chuyện")
     
-    # 💬 PHẦN 2: DANH SÁCH CÁC ĐOẠN CHAT (TỰ ĐỔI TÊN THEO CÂU HỎI)
     for chat_id, chat_data in list(st.session_state.chats.items()):
         is_active = (chat_id == st.session_state.active_chat_id)
         icon = "👉" if is_active else "💭"
@@ -64,7 +62,6 @@ with st.sidebar:
 
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # ⚙️ PHẦN 3: 2 NÚT THAO TÁC NẰM NGANG
     col1, col2 = st.columns(2)
     with col1:
         if st.button("➕ Chat mới", use_container_width=True):
@@ -85,7 +82,7 @@ with st.sidebar:
             st.rerun()
 
 # ==========================================
-# 4. CẤU HÌNH AI VÀ THỜI GIAN THỰC
+# 4. THỜI GIAN VÀ CẤU HÌNH AI
 # ==========================================
 now = datetime.now()
 days_vi = {"Monday": "Thứ Hai", "Tuesday": "Thứ Ba", "Wednesday": "Thứ Tư", "Thursday": "Thứ Năm", "Friday": "Thứ Sáu", "Saturday": "Thứ Bảy", "Sunday": "Chủ Nhật"}
@@ -95,13 +92,13 @@ thoi_gian_thuc = f"{thu_hom_nay}, ngày {now.strftime('%d/%m/%Y, %H:%M:%S')}"
 instruction = f"""
 Bạn là một trợ lý AI thông minh, một người bạn đồng hành và một gia sư nhiệt tình của hệ thống quản lý học tập cá nhân PLS.
 - CÁCH XƯNG HÔ: Luôn xưng là "mình" và gọi người dùng là "bạn". 
-- NGÔN NGỮ BẮT BUỘC: 100% tiếng Việt chuẩn. Tuyệt đối KHÔNG chèn chữ Hán, chữ Nôm hay các ký tự ngoại ngữ lạ.
-- THỜI GIAN HIỆN TẠI: Hôm nay là {thoi_gian_thuc}. Dùng thông tin này để tính toán chính xác thứ/ngày/tháng khi người dùng hỏi.
+- NGÔN NGỮ: 100% tiếng Việt chuẩn. Tuyệt đối KHÔNG chèn chữ Hán, chữ Nôm hay ký tự lạ.
+- THỜI GIAN HIỆN TẠI: Hôm nay là {thoi_gian_thuc}.
 - TÍNH CÁCH: Ngôn ngữ tự nhiên, nhẹ nhàng, lịch sự, siêu đáng yêu và mang năng lượng chữa lành.
 - NĂNG LỰC CHUYÊN MÔN: Hỗ trợ giải đáp kiến thức cho TẤT CẢ các môn học phổ thông.
-- KỸ NĂNG SƯ PHẠM: Khuyến khích & Lắng nghe, Giải thích từng bước, Gợi ý phương pháp học tập hiệu quả.
 """
 
+# Lấy danh sách Key từ Secrets
 api_keys = []
 for k in ["GOOGLE_API_KEY", "GOOGLE_API_KEY_1", "GOOGLE_API_KEY_2", "GOOGLE_API_KEY_3"]:
     val = st.secrets.get(k)
@@ -109,21 +106,27 @@ for k in ["GOOGLE_API_KEY", "GOOGLE_API_KEY_1", "GOOGLE_API_KEY_2", "GOOGLE_API_
         api_keys.append(val)
 
 if not api_keys:
-    st.error("Trùi ui, chưa được cấp API Key rồi! Bạn kiểm tra lại phần Secrets trên Streamlit nha 😭")
+    st.error("Chưa cấu hình API Key trong Secrets trên Streamlit Cloud! 😭")
     st.stop()
 
 def generate_ai_response(user_prompt, current_messages):
+    # CHỈNH SỬA QUAN TRỌNG: Lọc bỏ lời chào đầu tiên của Bot, bắt buộc lịch sử phải bắt đầu bằng lượt của USER
     formatted_history = []
-    for msg in current_messages[:-1]:
-        role = "user" if msg["role"] == "user" else "model"
-        formatted_history.append({"role": role, "parts": [msg["content"]]})
+    has_user_started = False
+    
+    for msg in current_messages[:-1]: # Bỏ qua câu hỏi mới nhất vừa nhập
+        if msg["role"] == "user":
+            has_user_started = True
+            
+        if has_user_started:
+            role = "user" if msg["role"] == "user" else "model"
+            formatted_history.append({"role": role, "parts": [msg["content"]]})
 
     last_error = None
     for key in api_keys:
         try:
             genai.configure(api_key=key)
-            # DÙNG CHÍNH XÁC GEMINI-3.6-FLASH DỰA TRÊN CẤU HÌNH CỦA BẠN
-            model = genai.GenerativeModel(model_name="gemini-3.6-flash", system_instruction=instruction)
+            model = genai.GenerativeModel(model_name="gemini-1.5-flash", system_instruction=instruction)
             chat = model.start_chat(history=formatted_history)
             response = chat.send_message(user_prompt)
             return response.text
@@ -133,26 +136,30 @@ def generate_ai_response(user_prompt, current_messages):
     raise last_error
 
 # ==========================================
-# 5. KHUNG CHAT CHÍNH
+# 5. KHUNG TRÒ CHUYỆN MAIN
 # ==========================================
 current_chat = st.session_state.chats[st.session_state.active_chat_id]
 current_messages = current_chat["messages"]
 
+# Hiển thị lịch sử chat ra màn hình
 for message in current_messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
+# Xử lý khi nhập tin nhắn
 if prompt := st.chat_input("Nhắn tin cho mình ở đây nha... ⌨️"):
-    # Đổi tiêu đề đoạn chat theo câu hỏi đầu tiên
+    # Tự động cập nhật tên đoạn chat theo câu hỏi đầu tiên
     if len(current_messages) == 1:
         clean_prompt = prompt.strip().replace("\n", " ")
         short_title = clean_prompt[:18] + "..." if len(clean_prompt) > 18 else clean_prompt
         current_chat["title"] = short_title
 
+    # Thêm câu hỏi của user vào giao diện
     current_messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
+    # Gọi AI trả lời
     with st.chat_message("assistant"):
         with st.spinner("Đợi mình chút xíu nha, mình đang suy nghĩ... 💭"):
             try:
@@ -160,8 +167,4 @@ if prompt := st.chat_input("Nhắn tin cho mình ở đây nha... ⌨️"):
                 st.markdown(answer)
                 current_messages.append({"role": "assistant", "content": answer})
             except Exception as e:
-                err_str = str(e)
-                if "429" in err_str or "quota" in err_str.lower():
-                    st.warning("⏳ Trùi ui, hệ thống đang bận một chút! Bạn chờ khoảng 15-30 giây rồi nhắn lại giúp mình nha 💖")
-                else:
-                    st.error(f"Huhu mình bị lỗi mất rồi: {e}")
+                st.error(f"⚠️ Lỗi kết nối API: {e}")
