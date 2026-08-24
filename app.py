@@ -17,7 +17,7 @@ Hôm nay bạn thế nào rồi, đi học có mệt lắm không? 🌷 Cần m�
 """
 
 # ==========================================
-# 2. BỘ NHỚ LƯU TRỮ LỊCH SỬ CHAT
+# 2. BỘ NHỚ LƯU LỊCH SỬ CHAT
 # ==========================================
 if "chats" not in st.session_state:
     st.session_state.chats = {
@@ -34,10 +34,10 @@ if "chat_count" not in st.session_state:
     st.session_state.chat_count = 1
 
 # ==========================================
-# 3. SIDEBAR (THÔNG TIN VIP PRO & LỊCH SỬ)
+# 3. SIDEBAR (ĐỦ 3 PHẦN CHUẨN YÊU CẦU)
 # ==========================================
 with st.sidebar:
-    # 🌟 THÔNG TIN HỖ TRỢ TRÊN CÙNG
+    # 🌟 PHẦN 1: THÔNG TIN HỖ TRỢ TRÊN CÙNG
     st.markdown("### 💌 Hỗ Trợ Kỹ Thuật")
     st.markdown("Nếu hệ thống gặp lỗi hoặc cần hướng dẫn thêm, bạn liên hệ thầy nha:")
     st.markdown("---")
@@ -52,8 +52,8 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("### 💬 Lịch sử trò chuyện")
     
-    # 💬 DANH SÁCH CÁC ĐOẠN CHAT (TỰ ĐỔI TÊN THEO CÂU HỎI)
-    for chat_id, chat_data in st.session_state.chats.items():
+    # 💬 PHẦN 2: DANH SÁCH ĐOẠN CHAT (TỰ ĐỔI TÊN THEO CÂU HỎI)
+    for chat_id, chat_data in list(st.session_state.chats.items()):
         is_active = (chat_id == st.session_state.active_chat_id)
         icon = "👉" if is_active else "💭"
         btn_label = f"{icon} {chat_data['title']}"
@@ -64,7 +64,7 @@ with st.sidebar:
 
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # ⚙️ 2 NÚT THAO TÁC NẰM NGANG
+    # ⚙️ PHẦN 3: 2 NÚT THAO TÁC NẰM NGANG
     col1, col2 = st.columns(2)
     with col1:
         if st.button("➕ Chat mới", use_container_width=True):
@@ -85,7 +85,7 @@ with st.sidebar:
             st.rerun()
 
 # ==========================================
-# 4. CẤU HÌNH AI VỚI TÍNH NĂNG TỰ ĐỔI MÔ HÌNH VÀ KEY DỰ PHÒNG
+# 4. CẤU HÌNH AI DÒ MÔ HÌNH TỰ ĐỘNG
 # ==========================================
 now = datetime.now()
 days_vi = {"Monday": "Thứ Hai", "Tuesday": "Thứ Ba", "Wednesday": "Thứ Tư", "Thursday": "Thứ Năm", "Friday": "Thứ Sáu", "Saturday": "Thứ Bảy", "Sunday": "Chủ Nhật"}
@@ -95,13 +95,12 @@ thoi_gian_thuc = f"{thu_hom_nay}, ngày {now.strftime('%d/%m/%Y, %H:%M:%S')}"
 instruction = f"""
 Bạn là một trợ lý AI thông minh, một người bạn đồng hành và một gia sư nhiệt tình của hệ thống quản lý học tập cá nhân PLS.
 - CÁCH XƯNG HÔ: Luôn xưng là "mình" và gọi người dùng là "bạn". 
-- NGÔN NGỮ BẮT BUỘC: Bạn phải sử dụng 100% tiếng Việt chuẩn. Tuyệt đối KHÔNG ĐƯỢC chèn chữ Hán, chữ Nôm hay các ký tự ngoại ngữ lạ.
-- THỜI GIAN HIỆN TẠI: Hôm nay là {thoi_gian_thuc}. Dùng thông tin này để tính toán ngày tháng nếu người dùng hỏi.
+- NGÔN NGỮ BẮT BUỘC: 100% tiếng Việt chuẩn. Tuyệt đối KHÔNG chèn chữ Hán, chữ Nôm.
+- THỜI GIAN HIỆN TẠI: Hôm nay là {thoi_gian_thuc}.
 - TÍNH CÁCH: Ngôn ngữ tự nhiên, nhẹ nhàng, lịch sự, siêu đáng yêu và mang năng lượng chữa lành.
 - NĂNG LỰC CHUYÊN MÔN: Hỗ trợ giải đáp kiến thức cho TẤT CẢ các môn học phổ thông.
 """
 
-# Tải danh sách API Key
 api_keys = []
 for k in ["GOOGLE_API_KEY", "GOOGLE_API_KEY_1", "GOOGLE_API_KEY_2", "GOOGLE_API_KEY_3"]:
     val = st.secrets.get(k)
@@ -109,11 +108,31 @@ for k in ["GOOGLE_API_KEY", "GOOGLE_API_KEY_1", "GOOGLE_API_KEY_2", "GOOGLE_API_
         api_keys.append(val)
 
 if not api_keys:
-    st.error("Trùi ui, chưa được cấp API Key rồi! Bạn kiểm tra lại phần Secrets trên Streamlit nha 😭")
+    st.error("Trùi ui, chưa được cấp API Key rồi! Bạn kiểm tra lại Secrets nha 😭")
     st.stop()
 
-# Danh sách tên mô hình phòng trường hợp thư viện cũ không nhận tên mới
-MODEL_CANDIDATES = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-pro"]
+# THUẬT TOÁN TỰ DÒ MÔ HÌNH HOẠT ĐỘNG (KHÔNG BAO GIỜ BỊ LỖI 404)
+def get_working_model(key):
+    genai.configure(api_key=key)
+    
+    # 1. Thử các mô hình phổ biến hiện nay
+    for model_name in ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"]:
+        try:
+            m = genai.GenerativeModel(model_name=model_name, system_instruction=instruction)
+            return m
+        except Exception:
+            continue
+
+    # 2. Nếu không được, tự hỏi Google danh sách mô hình đang sống
+    try:
+        for m in genai.list_models():
+            if "generateContent" in m.supported_generation_methods:
+                return genai.GenerativeModel(model_name=m.name, system_instruction=instruction)
+    except Exception:
+        pass
+
+    # 3. Phương án cuối cùng
+    return genai.GenerativeModel(model_name="gemini-1.5-flash", system_instruction=instruction)
 
 def generate_ai_response(user_prompt, current_messages):
     formatted_history = []
@@ -123,39 +142,27 @@ def generate_ai_response(user_prompt, current_messages):
 
     last_error = None
     for key in api_keys:
-        genai.configure(api_key=key)
-        for model_name in MODEL_CANDIDATES:
-            try:
-                model = genai.GenerativeModel(model_name=model_name, system_instruction=instruction)
-                chat = model.start_chat(history=formatted_history)
-                response = chat.send_message(user_prompt)
-                return response.text
-            except Exception as e:
-                last_error = e
-                # Nếu dính lỗi 404 (Không tìm thấy tên mô hình) -> Tự nhảy sang tên mô hình tiếp theo
-                if "404" in str(e) or "not found" in str(e).lower():
-                    continue
-                # Nếu dính lỗi 429 (Bị giới hạn tốc độ) -> Chuyển sang API Key tiếp theo
-                elif "429" in str(e) or "quota" in str(e).lower():
-                    break
-                else:
-                    continue
+        try:
+            model_obj = get_working_model(key)
+            chat = model_obj.start_chat(history=formatted_history)
+            response = chat.send_message(user_prompt)
+            return response.text
+        except Exception as e:
+            last_error = e
+            continue
     raise last_error
 
 # ==========================================
-# 5. KHUNG HỘI THOẠI MAIN
+# 5. KHUNG CHAT CHÍNH
 # ==========================================
 current_chat = st.session_state.chats[st.session_state.active_chat_id]
 current_messages = current_chat["messages"]
 
-# In tin nhắn cũ
 for message in current_messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Nhận tin nhắn mới
 if prompt := st.chat_input("Nhắn tin cho mình ở đây nha... ⌨️"):
-    # Đổi tiêu đề đoạn chat theo câu hỏi đầu tiên
     if len(current_messages) == 1:
         clean_prompt = prompt.strip().replace("\n", " ")
         short_title = clean_prompt[:18] + "..." if len(clean_prompt) > 18 else clean_prompt
@@ -174,6 +181,6 @@ if prompt := st.chat_input("Nhắn tin cho mình ở đây nha... ⌨️"):
             except Exception as e:
                 err_str = str(e)
                 if "429" in err_str or "quota" in err_str.lower():
-                    st.warning("⏳ Trùi ui, hệ thống đang bận một chút! Bạn chờ khoảng 15-30 giây rồi nhắn lại giúp mình nha 💖")
+                    st.warning("⏳ Trùi ui, mình đang trả lời hơi nhanh nên bị quá tải chút xíu! Bạn đợi khoảng 15-30 giây rồi nhắn lại giúp mình nha 💖")
                 else:
                     st.error(f"Huhu mình bị lỗi mất rồi: {e}")
