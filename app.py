@@ -45,10 +45,9 @@ else:
       3. Phương pháp học tập: Nếu cần, hãy gợi ý cho bạn ấy các phương pháp học hiệu quả như Pomodoro, Active Recall hoặc cách dùng Notion để quản lý thời gian.
     """
     
-    model = genai.GenerativeModel(
-        model_name="gemini-1.5-flash",
-        system_instruction=instruction
-    )
+model = genai.GenerativeModel(
+    model_name="gemini-2.0-flash", system_instruction=instruction
+)
 
     # ==========================================
     # 3. LỜI CHÀO TỰ ĐỘNG & QUẢN LÝ LỊCH SỬ CHAT
