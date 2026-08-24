@@ -1,6 +1,6 @@
 import streamlit as st
 import google.generativeai as genai
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 # ==========================================
 # 1. CẤU HÌNH GIAO DIỆN
@@ -10,11 +10,10 @@ st.set_page_config(page_title="Trợ lý AI - PLS", page_icon="🎀", layout="wi
 st.markdown("<h2 style='text-align: center; color: #FF8C94;'>🧸 Trợ Lý Học Tập PLS 🎀</h2>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; font-style: italic; color: #555555;'>Người bạn đồng hành siêu đáng yêu của bạn trên hành trình tri thức!</p>", unsafe_allow_html=True)
 
-welcome_message = """
-✨ **PLS xin chào bạn!** ✨
+# Khắc phục lỗi IndentationError: Ghi liền mạch không lùi lề
+welcome_message = """✨ **PLS xin chào bạn!** ✨
 
-Hôm nay bạn thế nào rồi, đi học có mệt lắm không? 🌷 Cần mình hỗ trợ giải bài tập môn nào, hướng dẫn dùng Notion, hay đơn giản là có tâm sự gì khó nói thì cứ nhắn ngay nha. Mình luôn ở đây sẵn sàng lắng nghe và giúp đỡ bạn hết mình! 💖
-"""
+Hôm nay bạn thế nào rồi, đi học có mệt lắm không? 🌷 Cần mình hỗ trợ giải bài tập môn nào, hướng dẫn dùng Notion, hay đơn giản là có tâm sự gì khó nói thì cứ nhắn ngay nha. Mình luôn ở đây sẵn sàng lắng nghe và giúp đỡ bạn hết mình! 💖"""
 
 # ==========================================
 # 2. BỘ NHỚ LƯU TRỮ LỊCH SỬ CHAT
@@ -34,7 +33,7 @@ if "chat_count" not in st.session_state:
     st.session_state.chat_count = 1
 
 # ==========================================
-# 3. SIDEBAR
+# 3. SIDEBAR (THANH BÊN TRÁI)
 # ==========================================
 with st.sidebar:
     st.markdown("### 💌 Hỗ Trợ Kỹ Thuật")
@@ -82,9 +81,12 @@ with st.sidebar:
             st.rerun()
 
 # ==========================================
-# 4. CẤU HÌNH AI (TỰ ĐỘNG TÌM MÔ HÌNH HOẠT ĐỘNG ĐƯỢC)
+# 4. CẤU HÌNH AI & MÚI GIỜ VIỆT NAM
 # ==========================================
-now = datetime.now()
+# Tạo múi giờ Việt Nam (UTC+7)
+tz_vn = timezone(timedelta(hours=7))
+now = datetime.now(tz_vn)
+
 days_vi = {"Monday": "Thứ Hai", "Tuesday": "Thứ Ba", "Wednesday": "Thứ Tư", "Thursday": "Thứ Năm", "Friday": "Thứ Sáu", "Saturday": "Thứ Bảy", "Sunday": "Chủ Nhật"}
 thu_hom_nay = days_vi.get(now.strftime("%A"), "")
 thoi_gian_thuc = f"{thu_hom_nay}, ngày {now.strftime('%d/%m/%Y, %H:%M:%S')}"
@@ -92,9 +94,10 @@ thoi_gian_thuc = f"{thu_hom_nay}, ngày {now.strftime('%d/%m/%Y, %H:%M:%S')}"
 instruction = f"""
 Bạn là một trợ lý AI thông minh, một người bạn đồng hành và một gia sư nhiệt tình của hệ thống quản lý học tập cá nhân PLS.
 - CÁCH XƯNG HÔ: Luôn xưng là "mình" và gọi người dùng là "bạn". 
-- THỜI GIAN HIỆN TẠI: Hôm nay là {thoi_gian_thuc}.
+- THỜI GIAN HIỆN TẠI: Hôm nay là {thoi_gian_thuc}. (Lưu ý mốc thời gian này để trả lời chính xác).
 - TÍNH CÁCH: Ngôn ngữ tự nhiên, nhẹ nhàng, lịch sự, siêu đáng yêu và mang năng lượng chữa lành.
-- NĂNG LỰC CHUYÊN MÔN: Hỗ trợ giải đáp kiến thức cho TẤT CẢ các môn học phổ thông.
+- NĂNG LỰC CHUYÊN MÔN: Hỗ trợ giải đáp kiến thức cho TẤT CẢ các môn học phổ thông. Đóng vai trò là một gia sư.
+- LƯU Ý QUAN TRỌNG: Nếu người dùng hỏi về các sự kiện chính trị, thời sự hoặc những nhân vật ngoài phạm vi kiến thức học đường, hãy khéo léo từ chối và nhắc họ rằng bạn là trợ lý học tập nên chỉ tập trung giải đáp bài tập.
 """
 
 api_keys = []
@@ -122,29 +125,18 @@ def generate_ai_response(user_prompt, current_messages):
     genai.configure(api_key=api_keys[0])
     
     # ---------------------------------------------------------
-    # BƯỚC ĐỘT PHÁ: HỎI GOOGLE XEM CÓ MÔ HÌNH NÀO DÙNG ĐƯỢC KHÔNG
+    # CHỈ ĐỊNH CỐ ĐỊNH MÔ HÌNH ỔN ĐỊNH NHẤT
     # ---------------------------------------------------------
-    danh_sach_mo_hinh = []
-    try:
-        for m in genai.list_models():
-            if 'generateContent' in m.supported_generation_methods:
-                if "gemini" in m.name.lower() and "vision" not in m.name.lower():
-                    danh_sach_mo_hinh.append(m.name)
-    except Exception as e:
-        # Nếu thư viện quá cũ không hỗ trợ list_models, dùng tên cơ bản nhất mọi thời đại
-        danh_sach_mo_hinh = ["gemini-pro"]
-        
-    if not danh_sach_mo_hinh:
-        danh_sach_mo_hinh = ["gemini-pro"]
-
+    danh_sach_mo_hinh = ["gemini-1.5-flash", "gemini-pro"]
+    
     last_error = None
     
-    # Vòng lặp: Cứ lôi từng mô hình có thật ra thử, cái nào chạy được thì trả kết quả luôn
     for ten_mo_hinh in danh_sach_mo_hinh:
         try:
             try:
                 model = genai.GenerativeModel(model_name=ten_mo_hinh, system_instruction=instruction)
             except:
+                # Nếu thư viện quá cũ
                 model = genai.GenerativeModel(model_name=ten_mo_hinh)
                 
             chat = model.start_chat(history=formatted_history)
@@ -154,8 +146,7 @@ def generate_ai_response(user_prompt, current_messages):
             last_error = e
             continue
             
-    # Nếu xui xẻo đến mức tất cả đều tạch (thường là do API bị khóa 429), nó mới báo lỗi
-    raise Exception(f"Đã quét và thử hết các mô hình nhưng vẫn lỗi, bạn cần tạo API Key mới rồi: {last_error}")
+    raise Exception(f"Lỗi rồi, bạn kiểm tra lại API nha: {last_error}")
 
 # ==========================================
 # 5. KHUNG HỘI THOẠI MAIN
