@@ -17,7 +17,7 @@ Hôm nay bạn thế nào rồi, đi học có mệt lắm không? 🌷 Cần m�
 """
 
 # ==========================================
-# 2. BỘ NHỚ LƯU LỊCH SỬ NHIỀU ĐOẠN CHAT
+# 2. BỘ NHỚ LƯU TRỮ LỊCH SỬ CHAT
 # ==========================================
 if "chats" not in st.session_state:
     st.session_state.chats = {
@@ -37,6 +37,7 @@ if "chat_count" not in st.session_state:
 # 3. SIDEBAR (THÔNG TIN VIP PRO & LỊCH SỬ)
 # ==========================================
 with st.sidebar:
+    # 🌟 THÔNG TIN HỖ TRỢ TRÊN CÙNG
     st.markdown("### 💌 Hỗ Trợ Kỹ Thuật")
     st.markdown("Nếu hệ thống gặp lỗi hoặc cần hướng dẫn thêm, bạn liên hệ thầy nha:")
     st.markdown("---")
@@ -51,6 +52,7 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("### 💬 Lịch sử trò chuyện")
     
+    # 💬 DANH SÁCH CÁC ĐOẠN CHAT (TỰ ĐỔI TÊN THEO CÂU HỎI)
     for chat_id, chat_data in st.session_state.chats.items():
         is_active = (chat_id == st.session_state.active_chat_id)
         icon = "👉" if is_active else "💭"
@@ -62,6 +64,7 @@ with st.sidebar:
 
     st.markdown("<br>", unsafe_allow_html=True)
     
+    # ⚙️ 2 NÚT THAO TÁC NẰM NGANG
     col1, col2 = st.columns(2)
     with col1:
         if st.button("➕ Chat mới", use_container_width=True):
@@ -82,7 +85,7 @@ with st.sidebar:
             st.rerun()
 
 # ==========================================
-# 4. CẤU HÌNH AI VỚI MÔ HÌNH MỚI NHẤT
+# 4. CẤU HÌNH AI VỚI TÍNH NĂNG TỰ ĐỔI MÔ HÌNH VÀ KEY DỰ PHÒNG
 # ==========================================
 now = datetime.now()
 days_vi = {"Monday": "Thứ Hai", "Tuesday": "Thứ Ba", "Wednesday": "Thứ Tư", "Thursday": "Thứ Năm", "Friday": "Thứ Sáu", "Saturday": "Thứ Bảy", "Sunday": "Chủ Nhật"}
@@ -93,12 +96,12 @@ instruction = f"""
 Bạn là một trợ lý AI thông minh, một người bạn đồng hành và một gia sư nhiệt tình của hệ thống quản lý học tập cá nhân PLS.
 - CÁCH XƯNG HÔ: Luôn xưng là "mình" và gọi người dùng là "bạn". 
 - NGÔN NGỮ BẮT BUỘC: Bạn phải sử dụng 100% tiếng Việt chuẩn. Tuyệt đối KHÔNG ĐƯỢC chèn chữ Hán, chữ Nôm hay các ký tự ngoại ngữ lạ.
-- THỜI GIAN HIỆN TẠI: Hôm nay là {thoi_gian_thuc}. Bạn hãy tính toán chính xác thứ/ngày/tháng khi người dùng hỏi.
-- THÔNG TIN THỜI SỰ: Chủ tịch nước Việt Nam hiện nay là ông Lương Cường (nhậm chức từ tháng 10/2024).
+- THỜI GIAN HIỆN TẠI: Hôm nay là {thoi_gian_thuc}. Dùng thông tin này để tính toán ngày tháng nếu người dùng hỏi.
 - TÍNH CÁCH: Ngôn ngữ tự nhiên, nhẹ nhàng, lịch sự, siêu đáng yêu và mang năng lượng chữa lành.
 - NĂNG LỰC CHUYÊN MÔN: Hỗ trợ giải đáp kiến thức cho TẤT CẢ các môn học phổ thông.
 """
 
+# Tải danh sách API Key
 api_keys = []
 for k in ["GOOGLE_API_KEY", "GOOGLE_API_KEY_1", "GOOGLE_API_KEY_2", "GOOGLE_API_KEY_3"]:
     val = st.secrets.get(k)
@@ -106,43 +109,53 @@ for k in ["GOOGLE_API_KEY", "GOOGLE_API_KEY_1", "GOOGLE_API_KEY_2", "GOOGLE_API_
         api_keys.append(val)
 
 if not api_keys:
-    st.error("Trùi ui, chưa được cấp API Key rồi! Bạn kiểm tra lại Secrets nha 😭")
+    st.error("Trùi ui, chưa được cấp API Key rồi! Bạn kiểm tra lại phần Secrets trên Streamlit nha 😭")
     st.stop()
 
-def generate_response_with_fallback(user_prompt, current_messages):
+# Danh sách tên mô hình phòng trường hợp thư viện cũ không nhận tên mới
+MODEL_CANDIDATES = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-pro"]
+
+def generate_ai_response(user_prompt, current_messages):
     formatted_history = []
     for msg in current_messages[:-1]:
-        if msg["role"] == "user":
-            formatted_history.append({"role": "user", "parts": [msg["content"]]})
-        elif msg["role"] == "assistant":
-            formatted_history.append({"role": "model", "parts": [msg["content"]]})
+        role = "user" if msg["role"] == "user" else "model"
+        formatted_history.append({"role": role, "parts": [msg["content"]]})
 
     last_error = None
     for key in api_keys:
-        try:
-            genai.configure(api_key=key)
-            # DÙNG BẢN MỚI NHẤT
-            model = genai.GenerativeModel(model_name="gemini-1.5-flash", system_instruction=instruction)
-            chat = model.start_chat(history=formatted_history)
-            response = chat.send_message(user_prompt)
-            return response.text
-        except Exception as e:
-            last_error = e
-            continue 
-            
+        genai.configure(api_key=key)
+        for model_name in MODEL_CANDIDATES:
+            try:
+                model = genai.GenerativeModel(model_name=model_name, system_instruction=instruction)
+                chat = model.start_chat(history=formatted_history)
+                response = chat.send_message(user_prompt)
+                return response.text
+            except Exception as e:
+                last_error = e
+                # Nếu dính lỗi 404 (Không tìm thấy tên mô hình) -> Tự nhảy sang tên mô hình tiếp theo
+                if "404" in str(e) or "not found" in str(e).lower():
+                    continue
+                # Nếu dính lỗi 429 (Bị giới hạn tốc độ) -> Chuyển sang API Key tiếp theo
+                elif "429" in str(e) or "quota" in str(e).lower():
+                    break
+                else:
+                    continue
     raise last_error
 
 # ==========================================
-# 5. KHUNG HỘI THOẠI
+# 5. KHUNG HỘI THOẠI MAIN
 # ==========================================
 current_chat = st.session_state.chats[st.session_state.active_chat_id]
 current_messages = current_chat["messages"]
 
+# In tin nhắn cũ
 for message in current_messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
+# Nhận tin nhắn mới
 if prompt := st.chat_input("Nhắn tin cho mình ở đây nha... ⌨️"):
+    # Đổi tiêu đề đoạn chat theo câu hỏi đầu tiên
     if len(current_messages) == 1:
         clean_prompt = prompt.strip().replace("\n", " ")
         short_title = clean_prompt[:18] + "..." if len(clean_prompt) > 18 else clean_prompt
@@ -155,12 +168,12 @@ if prompt := st.chat_input("Nhắn tin cho mình ở đây nha... ⌨️"):
     with st.chat_message("assistant"):
         with st.spinner("Đợi mình chút xíu nha, mình đang suy nghĩ... 💭"):
             try:
-                answer = generate_response_with_fallback(prompt, current_messages)
+                answer = generate_ai_response(prompt, current_messages)
                 st.markdown(answer)
                 current_messages.append({"role": "assistant", "content": answer})
             except Exception as e:
                 err_str = str(e)
                 if "429" in err_str or "quota" in err_str.lower():
-                    st.warning("⏳ Trùi ui, mình đang trả lời hơi nhanh nên bị quá tải chút xíu! Bạn đợi khoảng 30 giây rồi nhắn lại giúp mình nha 💖")
+                    st.warning("⏳ Trùi ui, hệ thống đang bận một chút! Bạn chờ khoảng 15-30 giây rồi nhắn lại giúp mình nha 💖")
                 else:
                     st.error(f"Huhu mình bị lỗi mất rồi: {e}")
