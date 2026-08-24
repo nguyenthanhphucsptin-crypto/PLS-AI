@@ -83,7 +83,6 @@ with st.sidebar:
 # ==========================================
 # 4. CẤU HÌNH AI & MÚI GIỜ VIỆT NAM
 # ==========================================
-# Tạo múi giờ Việt Nam (UTC+7)
 tz_vn = timezone(timedelta(hours=7))
 now = datetime.now(tz_vn)
 
@@ -125,9 +124,9 @@ def generate_ai_response(user_prompt, current_messages):
     genai.configure(api_key=api_keys[0])
     
     # ---------------------------------------------------------
-    # CHỈ ĐỊNH CỐ ĐỊNH MÔ HÌNH ỔN ĐỊNH NHẤT (Loại bỏ hoàn toàn gemini-pro)
+    # CHỈ ĐỊNH CỐ ĐỊNH DUY NHẤT 1 MÔ HÌNH: GEMINI-2.0-FLASH (XOÁ HẲN 1.5)
     # ---------------------------------------------------------
-    danh_sach_mo_hinh = ["gemini-2.0-flash", "gemini-1.5-flash"]
+    danh_sach_mo_hinh = ["gemini-2.0-flash"]
     
     last_error = None
     
