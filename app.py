@@ -17,7 +17,7 @@ Hôm nay bạn thế nào rồi, đi học có mệt lắm không? 🌷 Cần m�
 """
 
 # ==========================================
-# 2. QUẢN LÝ LỊCH SỬ CHAT (SESSION STATE)
+# 2. BỘ NHỚ LƯU LỊCH SỬ CHAT
 # ==========================================
 if "chats" not in st.session_state:
     st.session_state.chats = {
@@ -82,7 +82,7 @@ with st.sidebar:
             st.rerun()
 
 # ==========================================
-# 4. THỜI GIAN VÀ CẤU HÌNH AI
+# 4. THUẬT TOÁN AI "BẤT TỬ" (KHÔNG SỢ LỖI THƯ VIỆN CŨ)
 # ==========================================
 now = datetime.now()
 days_vi = {"Monday": "Thứ Hai", "Tuesday": "Thứ Ba", "Wednesday": "Thứ Tư", "Thursday": "Thứ Năm", "Friday": "Thứ Sáu", "Saturday": "Thứ Bảy", "Sunday": "Chủ Nhật"}
@@ -92,13 +92,12 @@ thoi_gian_thuc = f"{thu_hom_nay}, ngày {now.strftime('%d/%m/%Y, %H:%M:%S')}"
 instruction = f"""
 Bạn là một trợ lý AI thông minh, một người bạn đồng hành và một gia sư nhiệt tình của hệ thống quản lý học tập cá nhân PLS.
 - CÁCH XƯNG HÔ: Luôn xưng là "mình" và gọi người dùng là "bạn". 
-- NGÔN NGỮ: 100% tiếng Việt chuẩn. Tuyệt đối KHÔNG chèn chữ Hán, chữ Nôm hay ký tự lạ.
+- NGÔN NGỮ: 100% tiếng Việt chuẩn. Tuyệt đối KHÔNG chèn chữ Hán, chữ Nôm.
 - THỜI GIAN HIỆN TẠI: Hôm nay là {thoi_gian_thuc}.
 - TÍNH CÁCH: Ngôn ngữ tự nhiên, nhẹ nhàng, lịch sự, siêu đáng yêu và mang năng lượng chữa lành.
 - NĂNG LỰC CHUYÊN MÔN: Hỗ trợ giải đáp kiến thức cho TẤT CẢ các môn học phổ thông.
 """
 
-# Lấy danh sách Key từ Secrets
 api_keys = []
 for k in ["GOOGLE_API_KEY", "GOOGLE_API_KEY_1", "GOOGLE_API_KEY_2", "GOOGLE_API_KEY_3"]:
     val = st.secrets.get(k)
@@ -106,33 +105,49 @@ for k in ["GOOGLE_API_KEY", "GOOGLE_API_KEY_1", "GOOGLE_API_KEY_2", "GOOGLE_API_
         api_keys.append(val)
 
 if not api_keys:
-    st.error("Chưa cấu hình API Key trong Secrets trên Streamlit Cloud! 😭")
+    st.error("Chưa cấu hình API Key! 😭")
     st.stop()
 
 def generate_ai_response(user_prompt, current_messages):
-    # CHỈNH SỬA QUAN TRỌNG: Lọc bỏ lời chào đầu tiên của Bot, bắt buộc lịch sử phải bắt đầu bằng lượt của USER
     formatted_history = []
     has_user_started = False
     
-    for msg in current_messages[:-1]: # Bỏ qua câu hỏi mới nhất vừa nhập
+    for msg in current_messages[:-1]:
         if msg["role"] == "user":
             has_user_started = True
-            
         if has_user_started:
             role = "user" if msg["role"] == "user" else "model"
             formatted_history.append({"role": role, "parts": [msg["content"]]})
 
+    # Danh sách quét tên mô hình (Lỗi cái này tự nhảy cái khác)
+    model_names_to_try = [
+        "gemini-1.5-flash",
+        "gemini-1.5-pro",
+        "gemini-pro",
+        "gemini-1.0-pro"
+    ]
+
     last_error = None
     for key in api_keys:
-        try:
-            genai.configure(api_key=key)
-            model = genai.GenerativeModel(model_name="gemini-1.5-flash", system_instruction=instruction)
-            chat = model.start_chat(history=formatted_history)
-            response = chat.send_message(user_prompt)
-            return response.text
-        except Exception as e:
-            last_error = e
-            continue
+        genai.configure(api_key=key)
+        for m_name in model_names_to_try:
+            try:
+                # Cố tình KHÔNG DÙNG system_instruction để tránh lỗi 100%
+                model = genai.GenerativeModel(model_name=m_name)
+                chat = model.start_chat(history=formatted_history)
+                
+                # Gắn tính cách thủ công vào tin nhắn đầu tiên
+                if len(formatted_history) == 0:
+                    final_prompt = f"[HƯỚNG DẪN HỆ THỐNG: {instruction}]\n\nCâu hỏi của người dùng: {user_prompt}"
+                else:
+                    final_prompt = user_prompt
+                    
+                response = chat.send_message(final_prompt)
+                return response.text
+            except Exception as e:
+                last_error = e
+                continue # Nếu lỗi 404, lập tức chạy tiếp vòng lặp thử tên khác
+                
     raise last_error
 
 # ==========================================
@@ -141,25 +156,20 @@ def generate_ai_response(user_prompt, current_messages):
 current_chat = st.session_state.chats[st.session_state.active_chat_id]
 current_messages = current_chat["messages"]
 
-# Hiển thị lịch sử chat ra màn hình
 for message in current_messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Xử lý khi nhập tin nhắn
 if prompt := st.chat_input("Nhắn tin cho mình ở đây nha... ⌨️"):
-    # Tự động cập nhật tên đoạn chat theo câu hỏi đầu tiên
     if len(current_messages) == 1:
         clean_prompt = prompt.strip().replace("\n", " ")
         short_title = clean_prompt[:18] + "..." if len(clean_prompt) > 18 else clean_prompt
         current_chat["title"] = short_title
 
-    # Thêm câu hỏi của user vào giao diện
     current_messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Gọi AI trả lời
     with st.chat_message("assistant"):
         with st.spinner("Đợi mình chút xíu nha, mình đang suy nghĩ... 💭"):
             try:
@@ -167,4 +177,4 @@ if prompt := st.chat_input("Nhắn tin cho mình ở đây nha... ⌨️"):
                 st.markdown(answer)
                 current_messages.append({"role": "assistant", "content": answer})
             except Exception as e:
-                st.error(f"⚠️ Lỗi kết nối API: {e}")
+                st.error(f"⚠️ Huhu, lỗi hệ thống rồi: {e}")
