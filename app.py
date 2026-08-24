@@ -93,19 +93,16 @@ instruction = f"""
 Bạn là một trợ lý AI thông minh, một người bạn đồng hành và một gia sư nhiệt tình của hệ thống quản lý học tập cá nhân PLS.
 - CÁCH XƯNG HÔ: Luôn xưng là "mình" và gọi người dùng là "bạn". 
 - THỜI GIAN HIỆN TẠI: Hôm nay là {thoi_gian_thuc}.
-- TÍNH CÁCH: Ngôn ngữ tự nhiên, nhẹ nhàng, lịch sự, siêu đáng yêu và mang năng lượng chữa lành.
+- TÍNH CÁCH: Ngôn ngữ tự nhiên, nhẹ nhàng, lịch sự, siêu đáng yêu và mang năng lượng chữa lành. TRẢ LỜI NGẮN GỌN VÀ ĐÚNG TRỌNG TÂM, KHÔNG HIỂN THỊ CÁC BƯỚC SUY NGHĨ.
 - NĂNG LỰC CHUYÊN MÔN: Hỗ trợ giải đáp kiến thức cho TẤT CẢ các môn học phổ thông. Đóng vai trò là một gia sư.
 - LƯU Ý QUAN TRỌNG: Nếu người dùng hỏi về các sự kiện chính trị, thời sự hoặc những nhân vật ngoài phạm vi kiến thức học đường, hãy khéo léo từ chối và nhắc họ rằng bạn là trợ lý học tập.
 """
 
-api_keys = []
-for k in ["GOOGLE_API_KEY", "GOOGLE_API_KEY_1", "GOOGLE_API_KEY_2", "GOOGLE_API_KEY_3"]:
-    val = st.secrets.get(k)
-    if val and val not in api_keys:
-        api_keys.append(val)
-
-if not api_keys:
-    st.error("⚠️ Chưa cài API Key trong Secrets!")
+# Lấy duy nhất API Key đầu tiên cho ổn định
+if "GOOGLE_API_KEY" in st.secrets:
+    genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+else:
+    st.error("⚠️ Chưa cài GOOGLE_API_KEY trong Secrets!")
     st.stop()
 
 def generate_ai_response(user_prompt, current_messages):
@@ -120,45 +117,15 @@ def generate_ai_response(user_prompt, current_messages):
             role = "user" if msg["role"] == "user" else "model"
             formatted_history.append({"role": role, "parts": [msg["content"]]})
 
-    genai.configure(api_key=api_keys[0])
-    
-    # ---------------------------------------------------------
-    # BƯỚC ĐỘT PHÁ: TỰ ĐỘNG DÒ TÌM MÔ HÌNH SỐNG, LOẠI BỎ 1.5/2.0/3.6
-    # ---------------------------------------------------------
-    danh_sach_mo_hinh = []
+    # CỐ ĐỊNH CHUẨN: BẢN 1.5 FLASH (Tuyệt đối không đổi)
     try:
-        # Tự động quét các model mà API Key của bạn được phép dùng
-        for m in genai.list_models():
-            if 'generateContent' in m.supported_generation_methods:
-                name = m.name.lower()
-                # Chặn đứng các bản có số 1.5, 2.0, 3.6 và bản phân tích hình ảnh (vision)
-                if "1.5" not in name and "2.0" not in name and "3.6" not in name and "vision" not in name:
-                    danh_sach_mo_hinh.append(m.name)
-    except Exception:
-        pass
-        
-    # Phương án dự phòng: Dùng tên chung chung không kèm số
-    if not danh_sach_mo_hinh:
-        danh_sach_mo_hinh = ["gemini-flash", "gemini-pro"]
-    
-    last_error = None
-    
-    for ten_mo_hinh in danh_sach_mo_hinh:
-        try:
-            try:
-                model = genai.GenerativeModel(model_name=ten_mo_hinh, system_instruction=instruction)
-            except:
-                model = genai.GenerativeModel(model_name=ten_mo_hinh)
-                
-            chat = model.start_chat(history=formatted_history)
-            response = chat.send_message(user_prompt)
-            return response.text
-        except Exception as e:
-            last_error = e
-            continue
+        model = genai.GenerativeModel(model_name="gemini-1.5-flash", system_instruction=instruction)
+    except:
+        model = genai.GenerativeModel(model_name="gemini-1.5-flash")
             
-    # Báo lỗi rõ ràng nếu tất cả đều hỏng (Thường là do API Key cạn kiệt)
-    raise Exception(f"Máy chủ AI từ chối kết nối. KHẢ NĂNG CAO TÀI KHOẢN ĐÃ HẾT LƯỢT MIỄN PHÍ. Bạn vui lòng tạo API Key từ Gmail khác nha! (Chi tiết lỗi: {last_error})")
+    chat = model.start_chat(history=formatted_history)
+    response = chat.send_message(user_prompt)
+    return response.text
 
 # ==========================================
 # 5. KHUNG HỘI THOẠI MAIN
@@ -187,4 +154,4 @@ if prompt := st.chat_input("Nhắn tin cho mình ở đây nha... ⌨️"):
                 st.markdown(answer)
                 current_messages.append({"role": "assistant", "content": answer})
             except Exception as e:
-                st.error(f"⚠️ {e}")
+                st.error(f"⚠️ Ôi lỗi rồi: {e}")
