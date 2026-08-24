@@ -53,7 +53,7 @@ model = genai.GenerativeModel(
     # 3. LỜI CHÀO TỰ ĐỘNG & QUẢN LÝ LỊCH SỬ CHAT
     # ==========================================
     # Ghi sẵn một lời chào mở đầu cực kỳ dễ thương
-    welcome_message="""
+welcome_message="""
     ✨ **PLS xin chào bạn!** ✨
     
     Hôm nay bạn thế nào rồi, đi học có mệt lắm không? 🌷 Cần mình hỗ trợ giải bài tập môn nào, hướng dẫn dùng Notion, hay đơn giản là có tâm sự gì khó nói thì cứ nhắn ngay nha. Mình luôn ở đây sẵn sàng lắng nghe và giúp đỡ bạn hết mình! 💖
