@@ -102,7 +102,7 @@ with st.sidebar:
             st.rerun()
 
 # ==========================================
-# 5. CẤU HÌNH AI (LLAMA 3.3 70B)
+# 5. CẤU HÌNH AI (LLAMA 3.1 70B ỔN ĐỊNH CAO)
 # ==========================================
 instruction = """
 Bạn là PLS AI, trợ lý học tập siêu đáng yêu thuộc dự án "Xây dựng hệ thống Quản trị học tập cá nhân (Personal Learning System) trên nền tảng Notion cho học sinh THPT" của sinh viên Sư phạm Tin học trường Đại học Cần Thơ.
@@ -128,7 +128,7 @@ def generate_ai_response(current_messages):
         
     chat_completion = client.chat.completions.create(
         messages=messages,
-        model="llama-3.3-70b-versatile",
+        model="llama-3.1-70b-versatile", # Đã chuyển về bản ổn định nhất
         temperature=0.7,
         max_tokens=2048,
     )
