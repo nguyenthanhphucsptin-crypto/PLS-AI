@@ -17,7 +17,7 @@ Hôm nay bạn thế nào rồi, đi học có mệt lắm không? 🌷 Hệ th�
 Cần mình hỗ trợ giải bài tập, viết code Python, hay quản lý thời gian trên Notion thì cứ nhắn ngay nha. Mình luôn ở đây sẵn sàng giúp đỡ bạn hết mình! 💖"""
 
 # ==========================================
-# 2. CẤU HÌNH API GEMINI AN TOÀN
+# 2. CẤU HÌNH API GEMINI 2.5 FLASH AN TOÀN
 # ==========================================
 if "GEMINI_API_KEY" not in st.secrets:
     st.error("⚠️ Chưa tìm thấy GEMINI_API_KEY trong phần Secrets của Streamlit! Hãy vào Settings -> Secrets để cấu hình lại.")
@@ -38,8 +38,9 @@ try:
     - TUYỆT ĐỐI KHÔNG hiển thị các bước suy nghĩ nội bộ.
     """
     
+    # Sử dụng model Gemini 2.5 Flash mới nhất
     model = genai.GenerativeModel(
-        model_name="gemini-1.5-flash",
+        model_name="gemini-2.5-flash",
         system_instruction=instruction
     )
 except Exception as e:
@@ -118,7 +119,7 @@ with st.sidebar:
             st.rerun()
 
 # ==========================================
-# 5. HÀM GỌI API GỌN GÀNG, ỔN ĐỊNH
+# 5. HÀM GỌI API GEMINI 2.5 FLASH
 # ==========================================
 def generate_ai_response(current_messages):
     tz_vn = timezone(timedelta(hours=7))
