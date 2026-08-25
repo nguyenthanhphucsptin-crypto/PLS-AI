@@ -114,7 +114,7 @@ def generate_ai_response(user_prompt, current_messages):
         message=user_prompt,
         chat_history=chat_history,
         preamble=instruction,
-        model="command-r"
+        model="command"
     )
     return response.text
 
