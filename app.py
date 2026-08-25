@@ -1,5 +1,5 @@
 import streamlit as st
-import google.generativeai as genai
+import cohere
 from datetime import datetime, timedelta, timezone
 
 # ==========================================
@@ -80,66 +80,42 @@ with st.sidebar:
             st.rerun()
 
 # ==========================================
-# 4. CẤU HÌNH AI DYNAMIC & MÚI GIỜ VIỆT NAM
+# 4. CẤU HÌNH AI (COHERE COMMAND R)
 # ==========================================
 tz_vn = timezone(timedelta(hours=7))
 now = datetime.now(tz_vn)
-
 days_vi = {"Monday": "Thứ Hai", "Tuesday": "Thứ Ba", "Wednesday": "Thứ Tư", "Thursday": "Thứ Năm", "Friday": "Thứ Sáu", "Saturday": "Thứ Bảy", "Sunday": "Chủ Nhật"}
 thu_hom_nay = days_vi.get(now.strftime("%A"), "")
 thoi_gian_thuc = f"{thu_hom_nay}, ngày {now.strftime('%d/%m/%Y, %H:%M:%S')}"
 
-# Tối giản hóa lệnh hệ thống để AI không lải nhải
-instruction = f"""Bạn là trợ lý AI học tập của hệ thống PLS.
+instruction = f"""
+Bạn là trợ lý AI học tập của hệ thống E-learning PLS.
 - Thời gian hiện tại: {thoi_gian_thuc}.
-- Xưng hô: xưng "mình" và gọi người dùng là "bạn".
-- Tính cách: Dễ thương, ngắn gọn, súc tích, đi thẳng vào vấn đề. TUYỆT ĐỐI KHÔNG hiển thị các bước suy nghĩ nội bộ (internal thoughts/drafts). 
-- Nhiệm vụ: Trở thành gia sư giải đáp bài tập. Khéo léo từ chối mọi câu hỏi liên quan đến thời sự, chính trị hoặc các nhân vật ngoài luồng giáo dục."""
+- Xưng hô: xưng "mình" và gọi người dùng là "bạn". Luôn giữ thái độ dễ thương, mang năng lượng chữa lành.
+- Nhiệm vụ: Đóng vai trò là gia sư giải đáp bài tập phổ thông. 
+- Yêu cầu tuyệt đối: Trả lời ngắn gọn, trực tiếp, không dòng vo. KHÔNG BAO GIỜ được tiết lộ các bước suy nghĩ nội bộ của bạn. Từ chối mọi câu hỏi thời sự, chính trị.
+"""
 
-if "GOOGLE_API_KEY" in st.secrets:
-    genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+if "COHERE_API_KEY" in st.secrets:
+    co = cohere.Client(st.secrets["COHERE_API_KEY"])
 else:
-    st.error("⚠️ Chưa cài GOOGLE_API_KEY trong Secrets!")
+    st.error("⚠️ Chưa cài COHERE_API_KEY trong phần Secrets của Streamlit!")
     st.stop()
 
-def get_dynamic_model():
-    """Tự động hỏi máy chủ xem API key này được phép xài model nào để tránh lỗi 404"""
-    try:
-        available = [m.name.replace("models/", "") for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-        # Ưu tiên kiếm bản flash, không lấy bản phân tích hình ảnh (vision)
-        for name in available:
-            if "flash" in name.lower() and "vision" not in name.lower():
-                return name
-        for name in available:
-            if "pro" in name.lower() and "vision" not in name.lower():
-                return name
-        if available:
-            return available[0]
-    except Exception:
-        pass
-    return "gemini-pro" # Bước đường cùng
-
 def generate_ai_response(user_prompt, current_messages):
-    formatted_history = []
-    has_user_started = False
+    chat_history = []
     
+    # Định dạng lại lịch sử chat cho đúng chuẩn của Cohere
     for msg in current_messages[:-1]:
-        if msg["role"] == "user":
-            has_user_started = True
-        if has_user_started:
-            role = "user" if msg["role"] == "user" else "model"
-            formatted_history.append({"role": role, "parts": [msg["content"]]})
-
-    # Lấy tên model tự động 
-    chot_model = get_dynamic_model()
-    
-    try:
-        model = genai.GenerativeModel(model_name=chot_model, system_instruction=instruction)
-    except:
-        model = genai.GenerativeModel(model_name=chot_model)
-            
-    chat = model.start_chat(history=formatted_history)
-    response = chat.send_message(user_prompt)
+        role = "USER" if msg["role"] == "user" else "CHATBOT"
+        chat_history.append({"role": role, "message": msg["content"]})
+        
+    response = co.chat(
+        message=user_prompt,
+        chat_history=chat_history,
+        preamble=instruction,
+        model="command-r"
+    )
     return response.text
 
 # ==========================================
@@ -169,4 +145,4 @@ if prompt := st.chat_input("Nhắn tin cho mình ở đây nha... ⌨️"):
                 st.markdown(answer)
                 current_messages.append({"role": "assistant", "content": answer})
             except Exception as e:
-                st.error(f"⚠️ Ôi lỗi rồi: {e}")
+                st.error(f"⚠️ Ôi lỗi kết nối: {e}")
