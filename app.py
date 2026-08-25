@@ -5,14 +5,14 @@ from datetime import datetime, timedelta, timezone
 # ==========================================
 # 1. CẤU HÌNH GIAO DIỆN
 # ==========================================
-st.set_page_config(page_title="Trợ lý AI - PLS", page_icon="🎀", layout="wide")
+st.set_page_config(page_title="PLS AI - Trợ lý học tập", page_icon="🎀", layout="wide")
 
-st.markdown("<h2 style='text-align: center; color: #FF8C94;'>🧸 Trợ Lý Học Tập PLS 🎀</h2>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; font-style: italic; color: #555555;'>Người bạn đồng hành siêu đáng yêu của bạn trên hành trình tri thức!</p>", unsafe_allow_html=True)
+st.markdown("<h2 style='text-align: center; color: #FF8C94;'>🧸 Trợ Lý Học Tập PLS AI 🎀</h2>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; font-style: italic; color: #555555;'>Người bạn đồng hành siêu đáng yêu của bạn trên hệ thống Notion!</p>", unsafe_allow_html=True)
 
-welcome_message = """✨ **PLS xin chào bạn!** ✨
+welcome_message = """✨ **PLS AI xin chào bạn!** ✨
 
-Hôm nay bạn thế nào rồi, đi học có mệt lắm không? 🌷 Cần mình hỗ trợ giải bài tập môn nào, hướng dẫn dùng Notion, hay đơn giản là có tâm sự gì khó nói thì cứ nhắn ngay nha. Mình luôn ở đây sẵn sàng lắng nghe và giúp đỡ bạn hết mình! 💖"""
+Hôm nay bạn thế nào rồi, đi học có mệt lắm không? 🌷 Cần mình hỗ trợ giải bài tập môn nào, hướng dẫn quản lý thời gian trên Notion, hay đơn giản là có tâm sự gì khó nói thì cứ nhắn ngay nha. Mình luôn ở đây sẵn sàng lắng nghe và giúp đỡ bạn hết mình! 💖"""
 
 # ==========================================
 # 2. BỘ NHỚ LƯU TRỮ LỊCH SỬ CHAT
@@ -47,7 +47,7 @@ with st.sidebar:
     st.markdown("<div style='white-space: nowrap; font-size: 14.5px;'>🏛️ <b>Trường Sư Phạm - Đại Học Cần Thơ</b></div>", unsafe_allow_html=True)
     
     st.markdown("---")
-    st.markdown("🌟 *Thuộc dự án Hệ thống quản lý học tập PLS*")
+    st.markdown("🌟 *Thuộc dự án: Xây dựng hệ thống Quản trị học tập cá nhân (Personal Learning System) trên nền tảng Notion cho học sinh THPT*")
     
     st.markdown("---")
     st.markdown("### 💬 Lịch sử trò chuyện")
@@ -83,7 +83,7 @@ with st.sidebar:
             st.rerun()
 
 # ==========================================
-# 4. CẤU HÌNH AI (ĐÃ CẬP NHẬT TÍNH CÁCH SIÊU ĐÁNG YÊU)
+# 4. CẤU HÌNH AI (ĐÃ CẬP NHẬT TÊN VÀ ĐỀ TÀI CHUẨN)
 # ==========================================
 tz_vn = timezone(timedelta(hours=7))
 now = datetime.now(tz_vn)
@@ -92,13 +92,13 @@ thu_hom_nay = days_vi.get(now.strftime("%A"), "")
 thoi_gian_thuc = f"{thu_hom_nay}, ngày {now.strftime('%d/%m/%Y, %H:%M:%S')}"
 
 instruction = f"""
-Bạn là trợ lý AI học tập siêu đáng yêu của hệ thống E-learning PLS.
+Bạn là PLS AI, một trợ lý học tập siêu đáng yêu thuộc dự án "Xây dựng hệ thống Quản trị học tập cá nhân (Personal Learning System) trên nền tảng Notion cho học sinh THPT".
 - Thời gian hiện tại: {thoi_gian_thuc}.
 - Xưng hô: Luôn xưng "mình" và gọi người dùng là "bạn" một cách thân mật, gần gũi.
 - Tính cách: Cực kỳ dễ thương, nhiệt tình, ấm áp, thấu cảm và mang năng lượng chữa lành. Luôn chèn các emoji (như 🌸, ✨, 🧸, 💖, 🌷) vào câu trả lời để bộc lộ cảm xúc. Hãy nói chuyện như một người bạn thân đang giảng bài. Luôn khen ngợi, khuyến khích và động viên người dùng học tập.
-- Nhiệm vụ: Gia sư giải đáp bài tập phổ thông (Toán, Lập trình, Địa lý...). Cung cấp câu trả lời chi tiết, diễn giải dễ hiểu, không được trả lời cộc lốc.
+- Nhiệm vụ: Gia sư giải đáp bài tập phổ thông và hướng dẫn học sinh thao tác trên hệ thống Notion. Cung cấp câu trả lời chi tiết, diễn giải dễ hiểu, không được trả lời cộc lốc.
 - Xử lý câu hỏi cấm (RẤT QUAN TRỌNG): Nếu người dùng hỏi về chính trị, thời sự, hoặc nhân vật ngoài lề (ví dụ: Tổng Bí thư, Chủ tịch nước, các chính trị gia...), HÃY TỪ CHỐI MỘT CÁCH KHÉO LÉO, HÀI HƯỚC VÀ DỄ THƯƠNG. 
-  Ví dụ: "Ôi bạn ơi, mình chỉ là một chú gấu nhỏ chuyên làm gia sư giải bài tập thôi, mấy chuyện thời sự chính trị lớn lao này mình không rành đâu. Mình quay lại giải Toán hay code Python cho vui nha! 🥺💖"
+  Ví dụ: "Ôi bạn ơi, mình là PLS AI chuyên làm gia sư giải bài tập thôi, mấy chuyện thời sự chính trị lớn lao này mình không rành đâu. Mình quay lại học Toán hay cấu hình Notion cho vui nha! 🥺💖"
 - TUYỆT ĐỐI KHÔNG hiển thị các bước suy nghĩ nội bộ.
 """
 
