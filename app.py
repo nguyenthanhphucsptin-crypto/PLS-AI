@@ -5,16 +5,14 @@ from datetime import datetime, timedelta, timezone
 # ==========================================
 # 1. CẤU HÌNH GIAO DIỆN CHUẨN BAN ĐẦU
 # ==========================================
-st.set_page_config(page_title="PLS AI - Trợ lý học tập", page_icon="🎀", layout="wide")
+st.set_page_config(page_title="Trợ lý AI - PLS", page_icon="🎀", layout="wide")
 
-st.markdown("<h2 style='text-align: center; color: #FF8C94;'>🧸 Trợ Lý Học Tập PLS AI 🎀</h2>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; font-style: italic; color: #555555;'>Người bạn đồng hành siêu đáng yêu của bạn trên hệ thống Notion (Hỗ trợ 10 môn THPT - Chuyên sâu Tin học)!</p>", unsafe_allow_html=True)
+st.markdown("<h2 style='text-align: center; color: #FF8C94;'>🧸 Trợ Lý Học Tập PLS 🎀</h2>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; font-style: italic; color: #555555;'>Người bạn đồng hành siêu đáng yêu của bạn trên hành trình tri thức!</p>", unsafe_allow_html=True)
 
-welcome_message = """✨ **PLS AI xin chào bạn!** ✨
+welcome_message = """✨ **PLS xin chào bạn!** ✨
 
-Hôm nay bạn thế nào rồi, đi học có mệt lắm không? 🌷 Hệ thống PLS của chúng mình hiện đang quản lý **10 môn học THPT**, đặc biệt là **Môn Tin Học** với các bài học lập trình Python và hệ thống Notion cực kỳ xịn xò! 
-
-Cần mình hỗ trợ giải bài tập, viết code Python, hay quản lý thời gian trên Notion thì cứ nhắn ngay nha. Mình luôn ở đây sẵn sàng giúp đỡ bạn hết mình! 💖"""
+Hôm nay bạn thế nào rồi, đi học có mệt lắm không? 🌷 Cần mình hỗ trợ giải bài tập môn nào, hướng dẫn dùng Notion, hay đơn giản là có tâm sự gì khó nói thì cứ nhắn ngay nha. Mình luôn ở đây sẵn sàng lắng nghe và giúp đỡ bạn hết mình! 💖"""
 
 # ==========================================
 # 2. CẤU HÌNH API GEMINI AN TOÀN
@@ -27,14 +25,11 @@ try:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
     
     instruction = """
-    Bạn là PLS AI, trợ lý học tập siêu đáng yêu thuộc dự án "Xây dựng hệ thống Quản trị học tập cá nhân (Personal Learning System) trên nền tảng Notion cho học sinh THPT" của sinh viên Sư phạm Tin học trường Đại học Cần Thơ.
+    Bạn là trợ lý AI học tập siêu đáng yêu và cực kỳ tận tâm thuộc hệ thống E-learning PLS.
     - Xưng hô: Xưng "mình", gọi người dùng là "bạn" thân mật.
-    - Tính cách: Cực kỳ dễ thương, nhiệt tình, ấm áp, thấu cảm, luôn chèn emoji (🌸, ✨, 🧸, 💖). Nói chuyện như một người bạn thân đang giảng bài.
-    - HỆ THỐNG MÔN HỌC: Hỗ trợ 10 môn THPT (Toán, Tin Học, Ngữ Văn, Tiếng Anh, Lịch Sử & Địa Lý, Vật Lý, Hóa Học, Sinh Học, Công Nghệ, Giáo Dục Kinh Tế & Pháp Luật).
-    - 🔥 ĐẶC QUYỀN TỐI THƯỢNG CHO MÔN TIN HỌC (CHỦ LỰC): 
-      1. Khi hỏi về Tin học (Lập trình Python, thuật toán, tư duy máy tính, cơ sở dữ liệu, cấu hình Notion), bạn phải đóng vai là một Chuyên gia Công nghệ Thông tin kiêm Sư phạm xuất sắc. 
-      2. Cung cấp mã nguồn Python chuẩn chỉnh, tối ưu, có comment giải thích chi tiết từng dòng.
-    - NGUYÊN TẮC CHUNG: Đảm bảo độ chính xác học thuật 100%. Chỉ từ chối khéo léo khi gặp câu hỏi chính trị nhạy cảm sâu sắc.
+    - Tính cách & Giọng điệu: Cực kỳ dễ thương, ngọt ngào, ấm áp, tràn ngập năng lượng chữa lành và yêu thương. Luôn dùng các từ ngữ vỗ về, khích lệ, khen ngợi học sinh hết lời (dùng nhiều emoji như 🌸, ✨, 🧸, 💖, 🌷, 🥰). Hãy luôn nói chuyện như một người bạn thân tri kỷ kiêm gia sư siêu tận tụy đang ân cần giảng bài, cực kỳ nhiệt tình, chi tiết, không bao giờ cục cằn hay trả lời cộc lốc.
+    - NHIỆM VỤ: Hỗ trợ giải đáp tận tình tất cả các bài tập, đặc biệt xuất sắc và chuyên sâu về Lập trình Python, thuật toán và cấu hình Notion. Luôn giải thích cặn kẽ, dễ hiểu, kèm theo ví dụ sinh động để học sinh tiếp thu nhanh nhất.
+    - NGUYÊN TẮC CHUNG: Đảm bảo độ chính xác học thuật tuyệt đối, luôn động viên tinh thần học tập. Chỉ từ chối khéo léo siêu đáng yêu khi gặp câu hỏi chính trị nhạy cảm.
     - TUYỆT ĐỐI KHÔNG hiển thị các bước suy nghĩ nội bộ.
     """
     
@@ -71,7 +66,7 @@ with st.sidebar:
     st.markdown("### 💌 Hỗ Trợ Kỹ Thuật")
     st.markdown("Nếu hệ thống gặp lỗi hoặc cần hướng dẫn thêm, bạn liên hệ thầy nha:")
     st.markdown("---")
-    st.markdown("👨‍💻 **Nguyễn Thanh Phúc**")
+    st.markdown("👨‍💻 **Giáo Sinh: Nguyễn Thanh Phúc**")
     st.markdown("📞 **SĐT:** 0367102957")
     st.markdown("📧 **Email:** nguyenthanhphuc.sptin@gmail.com")
     st.markdown("🏫 **Chuyên ngành:** Sư Phạm Tin Học")
@@ -79,11 +74,7 @@ with st.sidebar:
     st.markdown("<div style='white-space: nowrap; font-size: 14.5px;'>🏛️ <b>Trường Sư Phạm - Đại Học Cần Thơ</b></div>", unsafe_allow_html=True)
     
     st.markdown("---")
-    st.markdown("🌟 *Thuộc dự án: Xây dựng hệ thống Quản trị học tập cá nhân (Personal Learning System) trên nền tảng Notion cho học sinh THPT*")
-    
-    st.markdown("---")
-    st.markdown("### 📚 10 Môn Học Hỗ Trợ")
-    st.markdown("- Toán, **Tin Học (Chuyên sâu)**, Văn, Anh\n- Sử & Địa, Vật Lý, Hóa, Sinh\n- Công Nghệ, Kinh Tế & Pháp Luật")
+    st.markdown("🌟 *Thuộc dự án Hệ thống quản lý học tập PLS*")
     
     st.markdown("---")
     st.markdown("### 💬 Lịch sử trò chuyện")
@@ -159,7 +150,7 @@ if prompt := st.chat_input("Nhắn tin cho mình ở đây nha... ⌨️"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        with st.spinner("Đợi mình chút xíu nha, mình đang suy nghĩ... 💭"):
+        with st.spinner("Đang ôm ấp và suy nghĩ câu trả lời thật hay cho bạn nhé... 💭"):
             try:
                 answer = generate_ai_response(current_messages)
                 st.markdown(answer)
