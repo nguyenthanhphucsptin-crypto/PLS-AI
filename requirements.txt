@@ -1,2 +1,2 @@
 streamlit
-cohere
+google-generativeai
