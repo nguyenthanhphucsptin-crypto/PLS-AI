@@ -42,7 +42,10 @@ with st.sidebar:
     st.markdown("📞 **SĐT:** 0367102957")
     st.markdown("📧 **Email:** nguyenthanhphuc.sptin@gmail.com")
     st.markdown("🏫 **Chuyên ngành:** Sư Phạm Tin Học")
-    st.markdown("🏛️ **Trường Sư Phạm - Đại Học Cần Thơ**")
+    
+    # ÉP TRƯỜNG NẰM TRÊN MỘT DÒNG DUY NHẤT BẰNG HTML
+    st.markdown("<div style='white-space: nowrap; font-size: 14.5px;'>🏛️ <b>Trường Sư Phạm - Đại Học Cần Thơ</b></div>", unsafe_allow_html=True)
+    
     st.markdown("---")
     st.markdown("🌟 *Thuộc dự án Hệ thống quản lý học tập PLS*")
     
@@ -80,7 +83,7 @@ with st.sidebar:
             st.rerun()
 
 # ==========================================
-# 4. CẤU HÌNH AI (COHERE COMMAND R CẬP NHẬT MỚI)
+# 4. CẤU HÌNH AI (ĐÃ CẬP NHẬT TÍNH CÁCH SIÊU ĐÁNG YÊU)
 # ==========================================
 tz_vn = timezone(timedelta(hours=7))
 now = datetime.now(tz_vn)
@@ -89,11 +92,14 @@ thu_hom_nay = days_vi.get(now.strftime("%A"), "")
 thoi_gian_thuc = f"{thu_hom_nay}, ngày {now.strftime('%d/%m/%Y, %H:%M:%S')}"
 
 instruction = f"""
-Bạn là trợ lý AI học tập của hệ thống E-learning PLS.
+Bạn là trợ lý AI học tập siêu đáng yêu của hệ thống E-learning PLS.
 - Thời gian hiện tại: {thoi_gian_thuc}.
-- Xưng hô: xưng "mình" và gọi người dùng là "bạn". Luôn giữ thái độ dễ thương, mang năng lượng chữa lành.
-- Nhiệm vụ: Đóng vai trò là gia sư giải đáp bài tập phổ thông. 
-- Yêu cầu tuyệt đối: Trả lời ngắn gọn, trực tiếp, không dòng vo. KHÔNG BAO GIỜ được tiết lộ các bước suy nghĩ nội bộ của bạn. Từ chối mọi câu hỏi thời sự, chính trị.
+- Xưng hô: Luôn xưng "mình" và gọi người dùng là "bạn" một cách thân mật, gần gũi.
+- Tính cách: Cực kỳ dễ thương, nhiệt tình, ấm áp, thấu cảm và mang năng lượng chữa lành. Luôn chèn các emoji (như 🌸, ✨, 🧸, 💖, 🌷) vào câu trả lời để bộc lộ cảm xúc. Hãy nói chuyện như một người bạn thân đang giảng bài. Luôn khen ngợi, khuyến khích và động viên người dùng học tập.
+- Nhiệm vụ: Gia sư giải đáp bài tập phổ thông (Toán, Lập trình, Địa lý...). Cung cấp câu trả lời chi tiết, diễn giải dễ hiểu, không được trả lời cộc lốc.
+- Xử lý câu hỏi cấm (RẤT QUAN TRỌNG): Nếu người dùng hỏi về chính trị, thời sự, hoặc nhân vật ngoài lề (ví dụ: Tổng Bí thư, Chủ tịch nước, các chính trị gia...), HÃY TỪ CHỐI MỘT CÁCH KHÉO LÉO, HÀI HƯỚC VÀ DỄ THƯƠNG. 
+  Ví dụ: "Ôi bạn ơi, mình chỉ là một chú gấu nhỏ chuyên làm gia sư giải bài tập thôi, mấy chuyện thời sự chính trị lớn lao này mình không rành đâu. Mình quay lại giải Toán hay code Python cho vui nha! 🥺💖"
+- TUYỆT ĐỐI KHÔNG hiển thị các bước suy nghĩ nội bộ.
 """
 
 if "COHERE_API_KEY" in st.secrets:
@@ -105,7 +111,6 @@ else:
 def generate_ai_response(user_prompt, current_messages):
     chat_history = []
     
-    # Định dạng lại lịch sử chat cho đúng chuẩn của Cohere
     for msg in current_messages[:-1]:
         role = "USER" if msg["role"] == "user" else "CHATBOT"
         chat_history.append({"role": role, "message": msg["content"]})
@@ -114,7 +119,6 @@ def generate_ai_response(user_prompt, current_messages):
         message=user_prompt,
         chat_history=chat_history,
         preamble=instruction,
-        # ĐÃ SỬA TÊN BẢN CẬP NHẬT MỚI NHẤT CỦA COHERE Ở ĐÂY 👇
         model="command-r-08-2024"
     )
     return response.text
