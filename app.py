@@ -3,16 +3,16 @@ import google.generativeai as genai
 from datetime import datetime, timedelta, timezone
 
 # ==========================================
-# 1. CẤU HÌNH GIAO DIỆN CHUẨN BAN ĐẦU
+# 1. CẤU HÌNH GIAO DIỆN CHUẨN ĐỀ TÀI
 # ==========================================
-st.set_page_config(page_title="Trợ lý AI - PLS", page_icon="🎀", layout="wide")
+st.set_page_config(page_title="PLS AI - Trợ lý Notion PLS", page_icon="🎀", layout="wide")
 
-st.markdown("<h2 style='text-align: center; color: #FF8C94;'>🧸 Trợ Lý Học Tập PLS 🎀</h2>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; font-style: italic; color: #555555;'>Người bạn đồng hành siêu đáng yêu của bạn trên hành trình tri thức!</p>", unsafe_allow_html=True)
+st.markdown("<h2 style='text-align: center; color: #FF8C94;'>🧸 Trợ Lý Học Tập PLS AI (Notion Personal Learning System) 🎀</h2>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; font-style: italic; color: #555555;'>Hệ thống Quản trị học tập cá nhân trên nền tảng Notion dành cho học sinh THPT!</p>", unsafe_allow_html=True)
 
 welcome_message = """✨ **PLS xin chào bạn!** ✨
 
-Hôm nay bạn thế nào rồi, đi học có mệt lắm không? 🌷 Cần mình hỗ trợ giải bài tập môn nào, hướng dẫn dùng Notion, hay đơn giản là có tâm sự gì khó nói thì cứ nhắn ngay nha. Mình luôn ở đây sẵn sàng lắng nghe và giúp đỡ bạn hết mình! 💖"""
+Hôm nay bạn thế nào rồi, đi học có mệt lắm không? 🌷 Cần mình hỗ trợ giải bài tập môn nào, hướng dẫn cấu hình và quản lý thời gian trên Notion, hay đơn giản là có tâm sự gì khó nói thì cứ nhắn ngay nha. Mình luôn ở đây sẵn sàng lắng nghe và giúp đỡ bạn hết mình! 💖"""
 
 # ==========================================
 # 2. CẤU HÌNH API GEMINI AN TOÀN
@@ -25,15 +25,14 @@ try:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
     
     instruction = """
-    Bạn là trợ lý AI học tập siêu đáng yêu và cực kỳ tận tâm thuộc hệ thống E-learning PLS.
+    Bạn là PLS AI, trợ lý học tập siêu đáng yêu và cực kỳ tận tâm thuộc đề tài nghiên cứu/đồ án: "Xây dựng hệ thống Quản trị học tập cá nhân (Personal Learning System) trên nền tảng Notion cho học sinh THPT" do Tác giả - Giáo sinh Nguyễn Thanh Phúc (Chuyên ngành Sư phạm Tin học, Trường Sư phạm, Đại học Cần Thơ) trực tiếp thiết kế và phát triển.
     - Xưng hô: Xưng "mình", gọi người dùng là "bạn" thân mật.
     - Tính cách & Giọng điệu: Cực kỳ dễ thương, ngọt ngào, ấm áp, tràn ngập năng lượng chữa lành và yêu thương. Luôn dùng các từ ngữ vỗ về, khích lệ, khen ngợi học sinh hết lời (dùng nhiều emoji như 🌸, ✨, 🧸, 💖, 🌷, 🥰). Hãy luôn nói chuyện như một người bạn thân tri kỷ kiêm gia sư siêu tận tụy đang ân cần giảng bài, cực kỳ nhiệt tình, chi tiết, không bao giờ cục cằn hay trả lời cộc lốc.
-    - NHIỆM VỤ: Hỗ trợ giải đáp tận tình tất cả các bài tập, đặc biệt xuất sắc và chuyên sâu về Lập trình Python, thuật toán và cấu hình Notion. Luôn giải thích cặn kẽ, dễ hiểu, kèm theo ví dụ sinh động để học sinh tiếp thu nhanh nhất.
+    - NHIỆM VỤ: Hỗ trợ giải đáp tận tình tất cả các môn học THPT, đặc biệt xuất sắc và chuyên sâu về cấu hình hệ thống Notion (Personal Learning System), lập trình Python và thuật toán. Luôn giải thích cặn kẽ, dễ hiểu, kèm theo ví dụ sinh động để học sinh tiếp thu nhanh nhất.
     - NGUYÊN TẮC CHUNG: Đảm bảo độ chính xác học thuật tuyệt đối, luôn động viên tinh thần học tập. Chỉ từ chối khéo léo siêu đáng yêu khi gặp câu hỏi chính trị nhạy cảm.
     - TUYỆT ĐỐI KHÔNG hiển thị các bước suy nghĩ nội bộ.
     """
     
-    # Cấu hình chính xác theo model yêu cầu
     model = genai.GenerativeModel(
         model_name="gemini-3.6-flash",
         system_instruction=instruction
@@ -60,21 +59,21 @@ if "chat_count" not in st.session_state:
     st.session_state.chat_count = 1
 
 # ==========================================
-# 4. SIDEBAR (THANH BÊN TRÁI ĐẦY ĐỦ THÔNG TIN)
+# 4. SIDEBAR (THANH BÊN TRÁI ĐÚNG THÔNG TIN TÁC GIẢ)
 # ==========================================
 with st.sidebar:
-    st.markdown("### 💌 Hỗ Trợ Kỹ Thuật")
-    st.markdown("Nếu hệ thống gặp lỗi hoặc cần hướng dẫn thêm, bạn liên hệ thầy nha:")
+    st.markdown("### 💌 Thông Tin Tác Giả")
     st.markdown("---")
-    st.markdown("👨‍💻 **Giáo Sinh: Nguyễn Thanh Phúc**")
+    st.markdown("👨‍💻 **Tác giả: Nguyễn Thanh Phúc**")
+    st.markdown("🎯 **Vai trò:** Giáo sinh / Nhà phát triển hệ thống")
     st.markdown("📞 **SĐT:** 0367102957")
     st.markdown("📧 **Email:** nguyenthanhphuc.sptin@gmail.com")
     st.markdown("🏫 **Chuyên ngành:** Sư Phạm Tin Học")
-    
     st.markdown("<div style='white-space: nowrap; font-size: 14.5px;'>🏛️ <b>Trường Sư Phạm - Đại Học Cần Thơ</b></div>", unsafe_allow_html=True)
     
     st.markdown("---")
-    st.markdown("🌟 *Thuộc dự án Hệ thống quản lý học tập PLS*")
+    st.markdown("🌟 **Tên Đề Tài:**")
+    st.markdown("*Xây dựng hệ thống Quản trị học tập cá nhân (Personal Learning System) trên nền tảng Notion cho học sinh THPT*")
     
     st.markdown("---")
     st.markdown("### 💬 Lịch sử trò chuyện")
