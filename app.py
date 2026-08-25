@@ -17,7 +17,7 @@ Hôm nay bạn thế nào rồi, đi học có mệt lắm không? 🌷 Hệ th�
 Cần mình hỗ trợ giải bài tập, viết code Python, hay quản lý thời gian trên Notion thì cứ nhắn ngay nha. Mình luôn ở đây sẵn sàng giúp đỡ bạn hết mình! 💖"""
 
 # ==========================================
-# 2. CẤU HÌNH API GEMINI 2.5 FLASH AN TOÀN
+# 2. CẤU HÌNH API GEMINI AN TOÀN
 # ==========================================
 if "GEMINI_API_KEY" not in st.secrets:
     st.error("⚠️ Chưa tìm thấy GEMINI_API_KEY trong phần Secrets của Streamlit! Hãy vào Settings -> Secrets để cấu hình lại.")
@@ -29,7 +29,7 @@ try:
     instruction = """
     Bạn là PLS AI, trợ lý học tập siêu đáng yêu thuộc dự án "Xây dựng hệ thống Quản trị học tập cá nhân (Personal Learning System) trên nền tảng Notion cho học sinh THPT" của sinh viên Sư phạm Tin học trường Đại học Cần Thơ.
     - Xưng hô: Xưng "mình", gọi người dùng là "bạn" thân mật.
-    - Tính cách: Dễ thương, nhiệt tình, ấm áp, thấu cảm, luôn chèn emoji (🌸, ✨, 🧸, 💖). Nói chuyện như một người bạn thân đang giảng bài.
+    - Tính cách: Cực kỳ dễ thương, nhiệt tình, ấm áp, thấu cảm, luôn chèn emoji (🌸, ✨, 🧸, 💖). Nói chuyện như một người bạn thân đang giảng bài.
     - HỆ THỐNG MÔN HỌC: Hỗ trợ 10 môn THPT (Toán, Tin Học, Ngữ Văn, Tiếng Anh, Lịch Sử & Địa Lý, Vật Lý, Hóa Học, Sinh Học, Công Nghệ, Giáo Dục Kinh Tế & Pháp Luật).
     - 🔥 ĐẶC QUYỀN TỐI THƯỢNG CHO MÔN TIN HỌC (CHỦ LỰC): 
       1. Khi hỏi về Tin học (Lập trình Python, thuật toán, tư duy máy tính, cơ sở dữ liệu, cấu hình Notion), bạn phải đóng vai là một Chuyên gia Công nghệ Thông tin kiêm Sư phạm xuất sắc. 
@@ -38,9 +38,9 @@ try:
     - TUYỆT ĐỐI KHÔNG hiển thị các bước suy nghĩ nội bộ.
     """
     
-    # Sử dụng model Gemini 2.5 Flash mới nhất
+    # Cấu hình chính xác theo model yêu cầu
     model = genai.GenerativeModel(
-        model_name="gemini-2.5-flash",
+        model_name="gemini-3.6-flash",
         system_instruction=instruction
     )
 except Exception as e:
@@ -119,7 +119,7 @@ with st.sidebar:
             st.rerun()
 
 # ==========================================
-# 5. HÀM GỌI API GEMINI 2.5 FLASH
+# 5. HÀM GỌI API GEMINI
 # ==========================================
 def generate_ai_response(current_messages):
     tz_vn = timezone(timedelta(hours=7))
