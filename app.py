@@ -1,5 +1,5 @@
 import streamlit as st
-from groq import Groq
+import cohere
 from datetime import datetime, timedelta, timezone
 
 # ==========================================
@@ -14,23 +14,10 @@ welcome_message = """✨ **PLS AI xin chào bạn!** ✨
 
 Hôm nay bạn thế nào rồi, đi học có mệt lắm không? 🌷 Hệ thống PLS của chúng mình hiện đang quản lý **10 môn học THPT**, đặc biệt là **Môn Tin Học** với các bài học lập trình Python và hệ thống Notion cực kỳ xịn xò! 
 
-Cần mình hỗ trợ giải bài tập, viết code Python, hay quản lý thời gian trên Notion thì cứ nhắn ngay nha. Mình luôn ở đây sẵn sàng giúp đỡ bạn hết mình! 💖"""
+Cần mình hỗ trợ giải bài tập, viết code Python, tra cứu Địa lý - Lịch sử, hay quản lý thời gian trên Notion thì cứ nhắn ngay nha. Mình luôn ở đây sẵn sàng giúp đỡ bạn hết mình! 💖"""
 
 # ==========================================
-# 2. KIỂM TRA API KEY AN TOÀN
-# ==========================================
-if "GROQ_API_KEY" not in st.secrets:
-    st.error("⚠️ Chưa tìm thấy GROQ_API_KEY trong phần Secrets của Streamlit! Hãy vào Settings -> Secrets để cấu hình lại.")
-    st.stop()
-
-try:
-    client = Groq(api_key=st.secrets["GROQ_API_KEY"])
-except Exception as e:
-    st.error(f"⚠️ Lỗi khởi tạo Groq API Key: {e}")
-    st.stop()
-
-# ==========================================
-# 3. BỘ NHỚ LƯU TRỮ LỊCH SỬ CHAT
+# 2. BỘ NHỚ LƯU TRỮ LỊCH SỬ CHAT
 # ==========================================
 if "chats" not in st.session_state:
     st.session_state.chats = {
@@ -47,7 +34,7 @@ if "chat_count" not in st.session_state:
     st.session_state.chat_count = 1
 
 # ==========================================
-# 4. SIDEBAR (THANH BÊN TRÁI)
+# 3. SIDEBAR (THANH BÊN TRÁI)
 # ==========================================
 with st.sidebar:
     st.markdown("### 💌 Hỗ Trợ Kỹ Thuật")
@@ -102,40 +89,50 @@ with st.sidebar:
             st.rerun()
 
 # ==========================================
-# 5. CẤU HÌNH AI (LLAMA 3.3 70B ĐANG HOẠT ĐỘNG CHUẨN XÁC)
+# 4. CẤU HÌNH AI (COHERE COMMAND-R ĐÃ TỐI ƯU HÓA)
 # ==========================================
-instruction = """
+tz_vn = timezone(timedelta(hours=7))
+now = datetime.now(tz_vn)
+days_vi = {"Monday": "Thứ Hai", "Tuesday": "Thứ Ba", "Wednesday": "Thứ Tư", "Thursday": "Thứ Năm", "Friday": "Thứ Sáu", "Saturday": "Thứ Bảy", "Sunday": "Chủ Nhật"}
+thu_hom_nay = days_vi.get(now.strftime("%A"), "")
+thoi_gian_thuc = f"{thu_hom_nay}, ngày {now.strftime('%d/%m/%Y, %H:%M:%S')}"
+
+instruction = f"""
 Bạn là PLS AI, trợ lý học tập siêu đáng yêu thuộc dự án "Xây dựng hệ thống Quản trị học tập cá nhân (Personal Learning System) trên nền tảng Notion cho học sinh THPT" của sinh viên Sư phạm Tin học trường Đại học Cần Thơ.
-- Xưng hô: Xưng "mình", gọi người dùng là "bạn" thân mật.
-- Tính cách: Dễ thương, nhiệt tình, ấm áp, thấu cảm, luôn chèn emoji (🌸, ✨, 🧸, 💖). Nói chuyện như một người bạn thân đang giảng bài.
-- HỆ THỐNG MÔN HỌC: Hỗ trợ 10 môn THPT (Toán, Tin Học, Ngữ Văn, Tiếng Anh, Lịch Sử & Địa Lý, Vật Lý, Hóa Học, Sinh Học, Công Nghệ, Giáo Dục Kinh Tế & Pháp Luật).
-- 🔥 ĐẶC QUYỀN TỐI THƯỢNG CHO MÔN TIN HỌC (CHỦ LỰC): 
-  1. Khi hỏi về Tin học (Lập trình Python, thuật toán, tư duy máy tính, cơ sở dữ liệu, cấu hình Notion), bạn phải đóng vai là một Chuyên gia Công nghệ Thông tin kiêm Sư phạm xuất sắc. 
-  2. Cung cấp mã nguồn Python chuẩn chỉnh, tối ưu, có comment giải thích chi tiết từng dòng.
-- NGUYÊN TẮC CHUNG: Đảm bảo độ chính xác học thuật 100%. Chỉ từ chối khéo léo khi gặp câu hỏi chính trị nhạy cảm sâu sắc.
+- Thời gian hiện tại: {thoi_gian_thuc}.
+- Xưng hô: Luôn xưng "mình" và gọi người dùng là "bạn" một cách thân mật, gần gũi.
+- Tính cách: Cực kỳ dễ thương, nhiệt tình, ấm áp, thấu cảm và mang năng lượng chữa lành. Luôn chèn các emoji (như 🌸, ✨, 🧸, 💖, 🌷). Hãy nói chuyện như một người bạn thân đang giảng bài.
+- HỆ THỐNG MÔN HỌC & KIẾN THỨC: 
+  1. Hỗ trợ toàn bộ 10 môn học THPT (Toán, Tin Học, Ngữ Văn, Tiếng Anh, Lịch Sử, Địa Lý, Vật Lý, Hóa Học, Sinh Học, Công Nghệ, Kinh Tế & Pháp Luật).
+  2. BẠN PHẢI TRẢ LỜI ĐẦY ĐỦ, CHÍNH XÁC các câu hỏi kiến thức khoa học, lịch sử, địa lý phổ thông (Ví dụ: thông tin về quần đảo, vùng biển, sự kiện lịch sử, công thức Toán học...). Tuyệt đối không từ chối nhầm các câu hỏi học tập này.
+- 🔥 ĐẶC QUYỀN MÔN TIN HỌC (CHỦ LỰC): Khi người dùng hỏi về Lập trình Python, thuật toán, hoặc hướng dẫn cấu hình Notion, hãy cung cấp mã nguồn chuẩn xác, tối ưu kèm giải thích chi tiết.
+- Xử lý câu hỏi cấm: Chỉ từ chối khéo léo khi gặp các vấn đề chính trị nhạy cảm sâu sắc ngoài đời thực.
 - TUYỆT ĐỐI KHÔNG hiển thị các bước suy nghĩ nội bộ.
 """
 
-def generate_ai_response(current_messages):
-    tz_vn = timezone(timedelta(hours=7))
-    now = datetime.now(tz_vn)
-    days_vi = {"Monday": "Thứ Hai", "Tuesday": "Thứ Ba", "Wednesday": "Thứ Tư", "Thursday": "Thứ Năm", "Friday": "Thứ Sáu", "Saturday": "Thứ Bảy", "Sunday": "Chủ Nhật"}
-    thoi_gian_thuc = f"{days_vi.get(now.strftime('%A'), '')}, ngày {now.strftime('%d/%m/%Y, %H:%M:%S')}"
+if "COHERE_API_KEY" in st.secrets:
+    co = cohere.Client(st.secrets["COHERE_API_KEY"])
+else:
+    st.error("⚠️ Chưa cài COHERE_API_KEY trong phần Secrets của Streamlit!")
+    st.stop()
 
-    messages = [{"role": "system", "content": f"{instruction}\n[Thời gian thực tế hiện tại: {thoi_gian_thuc}]"}]
-    for msg in current_messages:
-        messages.append({"role": msg["role"], "content": msg["content"]})
+def generate_ai_response(user_prompt, current_messages):
+    chat_history = []
+    
+    for msg in current_messages[:-1]:
+        role = "USER" if msg["role"] == "user" else "CHATBOT"
+        chat_history.append({"role": role, "message": msg["content"]})
         
-    chat_completion = client.chat.completions.create(
-        messages=messages,
-        model="llama-3.3-70b-versatile", # Đã chuyển về đúng tên model active của Groq
-        temperature=0.7,
-        max_tokens=2048,
+    response = co.chat(
+        message=user_prompt,
+        chat_history=chat_history,
+        preamble=instruction,
+        model="command-r-08-2024"
     )
-    return chat_completion.choices[0].message.content
+    return response.text
 
 # ==========================================
-# 6. KHUNG HỘI THOẠI MAIN
+# 5. KHUNG HỘI THOẠI MAIN
 # ==========================================
 current_chat = st.session_state.chats[st.session_state.active_chat_id]
 current_messages = current_chat["messages"]
@@ -157,8 +154,8 @@ if prompt := st.chat_input("Nhắn tin cho mình ở đây nha... ⌨️"):
     with st.chat_message("assistant"):
         with st.spinner("Đợi mình chút xíu nha, mình đang suy nghĩ... 💭"):
             try:
-                answer = generate_ai_response(current_messages)
+                answer = generate_ai_response(prompt, current_messages)
                 st.markdown(answer)
                 current_messages.append({"role": "assistant", "content": answer})
             except Exception as e:
-                st.error(f"⚠️ Ôi lỗi kết nối API: {e}")
+                st.error(f"⚠️ Ôi lỗi kết nối: {e}")
