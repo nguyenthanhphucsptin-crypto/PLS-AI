@@ -80,7 +80,7 @@ with st.sidebar:
             st.rerun()
 
 # ==========================================
-# 4. CẤU HÌNH AI (COHERE COMMAND R)
+# 4. CẤU HÌNH AI (COHERE COMMAND R CẬP NHẬT MỚI)
 # ==========================================
 tz_vn = timezone(timedelta(hours=7))
 now = datetime.now(tz_vn)
@@ -114,7 +114,8 @@ def generate_ai_response(user_prompt, current_messages):
         message=user_prompt,
         chat_history=chat_history,
         preamble=instruction,
-        model="command"
+        # ĐÃ SỬA TÊN BẢN CẬP NHẬT MỚI NHẤT CỦA COHERE Ở ĐÂY 👇
+        model="command-r-08-2024"
     )
     return response.text
 
