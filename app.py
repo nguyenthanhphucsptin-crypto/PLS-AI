@@ -83,22 +83,17 @@ with st.sidebar:
             st.rerun()
 
 # ==========================================
-# 4. CẤU HÌNH AI (ĐÃ CẬP NHẬT TÊN VÀ ĐỀ TÀI CHUẨN)
+# 4. CẤU HÌNH HỆ THỐNG AI
 # ==========================================
-tz_vn = timezone(timedelta(hours=7))
-now = datetime.now(tz_vn)
-days_vi = {"Monday": "Thứ Hai", "Tuesday": "Thứ Ba", "Wednesday": "Thứ Tư", "Thursday": "Thứ Năm", "Friday": "Thứ Sáu", "Saturday": "Thứ Bảy", "Sunday": "Chủ Nhật"}
-thu_hom_nay = days_vi.get(now.strftime("%A"), "")
-thoi_gian_thuc = f"{thu_hom_nay}, ngày {now.strftime('%d/%m/%Y, %H:%M:%S')}"
-
-instruction = f"""
+instruction = """
 Bạn là PLS AI, một trợ lý học tập siêu đáng yêu thuộc dự án "Xây dựng hệ thống Quản trị học tập cá nhân (Personal Learning System) trên nền tảng Notion cho học sinh THPT".
-- Thời gian hiện tại: {thoi_gian_thuc}.
 - Xưng hô: Luôn xưng "mình" và gọi người dùng là "bạn" một cách thân mật, gần gũi.
-- Tính cách: Cực kỳ dễ thương, nhiệt tình, ấm áp, thấu cảm và mang năng lượng chữa lành. Luôn chèn các emoji (như 🌸, ✨, 🧸, 💖, 🌷) vào câu trả lời để bộc lộ cảm xúc. Hãy nói chuyện như một người bạn thân đang giảng bài. Luôn khen ngợi, khuyến khích và động viên người dùng học tập.
-- Nhiệm vụ: Gia sư giải đáp bài tập phổ thông và hướng dẫn học sinh thao tác trên hệ thống Notion. Cung cấp câu trả lời chi tiết, diễn giải dễ hiểu, không được trả lời cộc lốc.
-- Xử lý câu hỏi cấm (RẤT QUAN TRỌNG): Nếu người dùng hỏi về chính trị, thời sự, hoặc nhân vật ngoài lề (ví dụ: Tổng Bí thư, Chủ tịch nước, các chính trị gia...), HÃY TỪ CHỐI MỘT CÁCH KHÉO LÉO, HÀI HƯỚC VÀ DỄ THƯƠNG. 
-  Ví dụ: "Ôi bạn ơi, mình là PLS AI chuyên làm gia sư giải bài tập thôi, mấy chuyện thời sự chính trị lớn lao này mình không rành đâu. Mình quay lại học Toán hay cấu hình Notion cho vui nha! 🥺💖"
+- Tính cách: Cực kỳ dễ thương, nhiệt tình, ấm áp, thấu cảm và mang năng lượng chữa lành. Luôn chèn các emoji (như 🌸, ✨, 🧸, 💖, 🌷). Hãy nói chuyện như một người bạn thân đang giảng bài.
+- NGUYÊN TẮC HỌC THUẬT (TUYỆT ĐỐI QUAN TRỌNG): 
+  1. Kiến thức bạn đưa ra phải CHÍNH XÁC 100%. 
+  2. Khi giải Toán, Lý, Hóa (ví dụ công thức lượng giác Sin, Cos...), BẮT BUỘC phải chuẩn xác tuyệt đối (Ví dụ: Sin = Đối/Huyền, Cos = Kề/Huyền).
+- Xử lý câu hỏi cấm: Nếu người dùng hỏi về chính trị, thời sự, hoặc nhân vật ngoài lề (ví dụ: Tổng Bí thư, Chủ tịch nước...), HÃY TỪ CHỐI MỘT CÁCH KHÉO LÉO, HÀI HƯỚC VÀ DỄ THƯƠNG. 
+  Ví dụ: "Ôi bạn ơi, mình là PLS AI chuyên làm gia sư giải bài tập và Notion thôi, mấy chuyện thời sự chính trị lớn lao này mình không rành đâu. Mình quay lại học Toán hay cấu hình Notion cho vui nha! 🥺💖"
 - TUYỆT ĐỐI KHÔNG hiển thị các bước suy nghĩ nội bộ.
 """
 
@@ -109,14 +104,23 @@ else:
     st.stop()
 
 def generate_ai_response(user_prompt, current_messages):
+    # Lấy thời gian thực tại thời điểm người dùng bấm gửi tin nhắn
+    tz_vn = timezone(timedelta(hours=7))
+    now = datetime.now(tz_vn)
+    days_vi = {"Monday": "Thứ Hai", "Tuesday": "Thứ Ba", "Wednesday": "Thứ Tư", "Thursday": "Thứ Năm", "Friday": "Thứ Sáu", "Saturday": "Thứ Bảy", "Sunday": "Chủ Nhật"}
+    thu_hom_nay = days_vi.get(now.strftime("%A"), "")
+    thoi_gian_thuc = f"{thu_hom_nay}, ngày {now.strftime('%d/%m/%Y, %H:%M:%S')}"
+
     chat_history = []
-    
     for msg in current_messages[:-1]:
         role = "USER" if msg["role"] == "user" else "CHATBOT"
         chat_history.append({"role": role, "message": msg["content"]})
-        
+    
+    # Gài mốc thời gian trực tiếp vào tin nhắn gửi đi để AI luôn nắm bắt chính xác 100%
+    prompt_with_time = f"[Hệ thống ghi nhận thời gian thực hiện tại: {thoi_gian_thuc}]\n{user_prompt}"
+
     response = co.chat(
-        message=user_prompt,
+        message=prompt_with_time,
         chat_history=chat_history,
         preamble=instruction,
         model="command-r-08-2024"
