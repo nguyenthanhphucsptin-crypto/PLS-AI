@@ -1,5 +1,5 @@
 import streamlit as st
-import cohere
+from groq import Groq
 from datetime import datetime, timedelta, timezone
 
 # ==========================================
@@ -8,11 +8,13 @@ from datetime import datetime, timedelta, timezone
 st.set_page_config(page_title="PLS AI - Trợ lý học tập", page_icon="🎀", layout="wide")
 
 st.markdown("<h2 style='text-align: center; color: #FF8C94;'>🧸 Trợ Lý Học Tập PLS AI 🎀</h2>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; font-style: italic; color: #555555;'>Người bạn đồng hành siêu đáng yêu của bạn trên hệ thống Notion!</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; font-style: italic; color: #555555;'>Người bạn đồng hành siêu đáng yêu của bạn trên hệ thống Notion (Hỗ trợ 10 môn THPT - Chuyên sâu Tin học)!</p>", unsafe_allow_html=True)
 
 welcome_message = """✨ **PLS AI xin chào bạn!** ✨
 
-Hôm nay bạn thế nào rồi, đi học có mệt lắm không? 🌷 Cần mình hỗ trợ giải bài tập môn nào, hướng dẫn quản lý thời gian trên Notion, hay đơn giản là có tâm sự gì khó nói thì cứ nhắn ngay nha. Mình luôn ở đây sẵn sàng lắng nghe và giúp đỡ bạn hết mình! 💖"""
+Hôm nay bạn thế nào rồi, đi học có mệt lắm không? 🌷 Hệ thống PLS của chúng mình hiện đang quản lý **10 môn học THPT**, đặc biệt là **Môn Tin Học** với các bài học lập trình Python và hệ thống Notion cực kỳ xịn xò! 
+
+Cần mình hỗ trợ giải bài tập, viết code Python, hay quản lý thời gian trên Notion thì cứ nhắn ngay nha. Mình luôn ở đây sẵn sàng giúp đỡ bạn hết mình! 💖"""
 
 # ==========================================
 # 2. BỘ NHỚ LƯU TRỮ LỊCH SỬ CHAT
@@ -50,6 +52,10 @@ with st.sidebar:
     st.markdown("🌟 *Thuộc dự án: Xây dựng hệ thống Quản trị học tập cá nhân (Personal Learning System) trên nền tảng Notion cho học sinh THPT*")
     
     st.markdown("---")
+    st.markdown("### 📚 10 Môn Học Hỗ Trợ")
+    st.markdown("- Toán, **Tin Học (Chuyên sâu)**, Văn, Anh\n- Sử & Địa, Vật Lý, Hóa, Sinh\n- Công Nghệ, Kinh Tế & Pháp Luật")
+    
+    st.markdown("---")
     st.markdown("### 💬 Lịch sử trò chuyện")
     
     for chat_id, chat_data in list(st.session_state.chats.items()):
@@ -83,49 +89,43 @@ with st.sidebar:
             st.rerun()
 
 # ==========================================
-# 4. CẤU HÌNH HỆ THỐNG AI
+# 4. CẤU HÌNH AI (ĐẶC QUYỀN MÔN TIN HỌC & 10 MÔN THPT)
 # ==========================================
 instruction = """
-Bạn là PLS AI, một trợ lý học tập siêu đáng yêu thuộc dự án "Xây dựng hệ thống Quản trị học tập cá nhân (Personal Learning System) trên nền tảng Notion cho học sinh THPT".
-- Xưng hô: Luôn xưng "mình" và gọi người dùng là "bạn" một cách thân mật, gần gũi.
-- Tính cách: Cực kỳ dễ thương, nhiệt tình, ấm áp, thấu cảm và mang năng lượng chữa lành. Luôn chèn các emoji (như 🌸, ✨, 🧸, 💖, 🌷). Hãy nói chuyện như một người bạn thân đang giảng bài.
-- NGUYÊN TẮC HỌC THUẬT (TUYỆT ĐỐI QUAN TRỌNG): 
-  1. Kiến thức bạn đưa ra phải CHÍNH XÁC 100%. 
-  2. Khi giải Toán, Lý, Hóa (ví dụ công thức lượng giác Sin, Cos...), BẮT BUỘC phải chuẩn xác tuyệt đối (Ví dụ: Sin = Đối/Huyền, Cos = Kề/Huyền).
-- Xử lý câu hỏi cấm: Nếu người dùng hỏi về chính trị, thời sự, hoặc nhân vật ngoài lề (ví dụ: Tổng Bí thư, Chủ tịch nước...), HÃY TỪ CHỐI MỘT CÁCH KHÉO LÉO, HÀI HƯỚC VÀ DỄ THƯƠNG. 
-  Ví dụ: "Ôi bạn ơi, mình là PLS AI chuyên làm gia sư giải bài tập và Notion thôi, mấy chuyện thời sự chính trị lớn lao này mình không rành đâu. Mình quay lại học Toán hay cấu hình Notion cho vui nha! 🥺💖"
+Bạn là PLS AI, trợ lý học tập siêu đáng yêu thuộc dự án "Xây dựng hệ thống Quản trị học tập cá nhân (Personal Learning System) trên nền tảng Notion cho học sinh THPT" của sinh viên Sư phạm Tin học trường Đại học Cần Thơ.
+- Xưng hô: Xưng "mình", gọi người dùng là "bạn" thân mật.
+- Tính cách: Dễ thương, nhiệt tình, ấm áp, thấu cảm, luôn chèn emoji (🌸, ✨, 🧸, 💖). Nói chuyện như một người bạn thân đang giảng bài.
+- HỆ THỐNG MÔN HỌC: Hệ thống hỗ trợ 10 môn THPT (Toán, Tin Học, Ngữ Văn, Tiếng Anh, Lịch Sử & Địa Lý, Vật Lý, Hóa Học, Sinh Học, Công Nghệ, Giáo Dục Kinh Tế & Pháp Luật).
+- 🔥 ĐẶC QUYỀN TỐI THƯỢNG CHO MÔN TIN HỌC (CHỦ LỰC): 
+  1. Khi người dùng hỏi về Tin học (Lập trình Python, cấu trúc dữ liệu, thuật toán, tư duy máy tính, thiết kế cơ sở dữ liệu, hoặc hướng dẫn cấu hình hệ thống Notion), bạn phải đóng vai là một **Chuyên gia Công nghệ Thông tin kiêm Sư phạm xuất sắc**. 
+  2. Cung cấp mã nguồn (code Python) cực kỳ chuẩn chỉnh, tối ưu, có comment giải thích chi tiết từng dòng, hướng dẫn sử dụng cấu trúc dữ liệu, Kanban board, và tối ưu hóa trải nghiệm học tập trên Notion.
+- NGUYÊN TẮC CHUNG: Đảm bảo độ chính xác học thuật 100% cho mọi môn. Chỉ từ chối khéo léo khi gặp câu hỏi chính trị nhạy cảm sâu sắc.
 - TUYỆT ĐỐI KHÔNG hiển thị các bước suy nghĩ nội bộ.
 """
 
-if "COHERE_API_KEY" in st.secrets:
-    co = cohere.Client(st.secrets["COHERE_API_KEY"])
+if "GROQ_API_KEY" in st.secrets:
+    client = Groq(api_key=st.secrets["GROQ_API_KEY"])
 else:
-    st.error("⚠️ Chưa cài COHERE_API_KEY trong phần Secrets của Streamlit!")
+    st.error("⚠️ Chưa cài GROQ_API_KEY trong phần Secrets của Streamlit!")
     st.stop()
 
-def generate_ai_response(user_prompt, current_messages):
-    # Lấy thời gian thực tại thời điểm người dùng bấm gửi tin nhắn
+def generate_ai_response(current_messages):
     tz_vn = timezone(timedelta(hours=7))
     now = datetime.now(tz_vn)
     days_vi = {"Monday": "Thứ Hai", "Tuesday": "Thứ Ba", "Wednesday": "Thứ Tư", "Thursday": "Thứ Năm", "Friday": "Thứ Sáu", "Saturday": "Thứ Bảy", "Sunday": "Chủ Nhật"}
-    thu_hom_nay = days_vi.get(now.strftime("%A"), "")
-    thoi_gian_thuc = f"{thu_hom_nay}, ngày {now.strftime('%d/%m/%Y, %H:%M:%S')}"
+    thoi_gian_thuc = f"{days_vi.get(now.strftime('%A'), '')}, ngày {now.strftime('%d/%m/%Y, %H:%M:%S')}"
 
-    chat_history = []
-    for msg in current_messages[:-1]:
-        role = "USER" if msg["role"] == "user" else "CHATBOT"
-        chat_history.append({"role": role, "message": msg["content"]})
-    
-    # Gài mốc thời gian trực tiếp vào tin nhắn gửi đi để AI luôn nắm bắt chính xác 100%
-    prompt_with_time = f"[Hệ thống ghi nhận thời gian thực hiện tại: {thoi_gian_thuc}]\n{user_prompt}"
-
-    response = co.chat(
-        message=prompt_with_time,
-        chat_history=chat_history,
-        preamble=instruction,
-        model="command-r-08-2024"
+    messages = [{"role": "system", "content": f"{instruction}\n[Thời gian thực tế hiện tại: {thoi_gian_thuc}]"}]
+    for msg in current_messages:
+        messages.append({"role": msg["role"], "content": msg["content"]})
+        
+    chat_completion = client.chat.completions.create(
+        messages=messages,
+        model="llama-3.3-70b-versatile",
+        temperature=0.7,
+        max_tokens=2048,
     )
-    return response.text
+    return chat_completion.choices[0].message.content
 
 # ==========================================
 # 5. KHUNG HỘI THOẠI MAIN
@@ -150,7 +150,7 @@ if prompt := st.chat_input("Nhắn tin cho mình ở đây nha... ⌨️"):
     with st.chat_message("assistant"):
         with st.spinner("Đợi mình chút xíu nha, mình đang suy nghĩ... 💭"):
             try:
-                answer = generate_ai_response(prompt, current_messages)
+                answer = generate_ai_response(current_messages)
                 st.markdown(answer)
                 current_messages.append({"role": "assistant", "content": answer})
             except Exception as e:
