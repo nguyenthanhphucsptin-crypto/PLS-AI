@@ -17,7 +17,20 @@ Hôm nay bạn thế nào rồi, đi học có mệt lắm không? 🌷 Hệ th�
 Cần mình hỗ trợ giải bài tập, viết code Python, hay quản lý thời gian trên Notion thì cứ nhắn ngay nha. Mình luôn ở đây sẵn sàng giúp đỡ bạn hết mình! 💖"""
 
 # ==========================================
-# 2. BỘ NHỚ LƯU TRỮ LỊCH SỬ CHAT
+# 2. KIỂM TRA API KEY AN TOÀN
+# ==========================================
+if "GROQ_API_KEY" not in st.secrets:
+    st.error("⚠️ Chưa tìm thấy GROQ_API_KEY trong phần Secrets của Streamlit! Hãy vào Settings -> Secrets để cấu hình lại.")
+    st.stop()
+
+try:
+    client = Groq(api_key=st.secrets["GROQ_API_KEY"])
+except Exception as e:
+    st.error(f"⚠️ Lỗi khởi tạo Groq API Key: {e}")
+    st.stop()
+
+# ==========================================
+# 3. BỘ NHỚ LƯU TRỮ LỊCH SỬ CHAT
 # ==========================================
 if "chats" not in st.session_state:
     st.session_state.chats = {
@@ -34,7 +47,7 @@ if "chat_count" not in st.session_state:
     st.session_state.chat_count = 1
 
 # ==========================================
-# 3. SIDEBAR (THANH BÊN TRÁI)
+# 4. SIDEBAR (THANH BÊN TRÁI)
 # ==========================================
 with st.sidebar:
     st.markdown("### 💌 Hỗ Trợ Kỹ Thuật")
@@ -89,25 +102,19 @@ with st.sidebar:
             st.rerun()
 
 # ==========================================
-# 4. CẤU HÌNH AI (ĐẶC QUYỀN MÔN TIN HỌC & 10 MÔN THPT)
+# 5. CẤU HÌNH AI (LLAMA 3.3 70B)
 # ==========================================
 instruction = """
 Bạn là PLS AI, trợ lý học tập siêu đáng yêu thuộc dự án "Xây dựng hệ thống Quản trị học tập cá nhân (Personal Learning System) trên nền tảng Notion cho học sinh THPT" của sinh viên Sư phạm Tin học trường Đại học Cần Thơ.
 - Xưng hô: Xưng "mình", gọi người dùng là "bạn" thân mật.
 - Tính cách: Dễ thương, nhiệt tình, ấm áp, thấu cảm, luôn chèn emoji (🌸, ✨, 🧸, 💖). Nói chuyện như một người bạn thân đang giảng bài.
-- HỆ THỐNG MÔN HỌC: Hệ thống hỗ trợ 10 môn THPT (Toán, Tin Học, Ngữ Văn, Tiếng Anh, Lịch Sử & Địa Lý, Vật Lý, Hóa Học, Sinh Học, Công Nghệ, Giáo Dục Kinh Tế & Pháp Luật).
+- HỆ THỐNG MÔN HỌC: Hỗ trợ 10 môn THPT (Toán, Tin Học, Ngữ Văn, Tiếng Anh, Lịch Sử & Địa Lý, Vật Lý, Hóa Học, Sinh Học, Công Nghệ, Giáo Dục Kinh Tế & Pháp Luật).
 - 🔥 ĐẶC QUYỀN TỐI THƯỢNG CHO MÔN TIN HỌC (CHỦ LỰC): 
-  1. Khi người dùng hỏi về Tin học (Lập trình Python, cấu trúc dữ liệu, thuật toán, tư duy máy tính, thiết kế cơ sở dữ liệu, hoặc hướng dẫn cấu hình hệ thống Notion), bạn phải đóng vai là một **Chuyên gia Công nghệ Thông tin kiêm Sư phạm xuất sắc**. 
-  2. Cung cấp mã nguồn (code Python) cực kỳ chuẩn chỉnh, tối ưu, có comment giải thích chi tiết từng dòng, hướng dẫn sử dụng cấu trúc dữ liệu, Kanban board, và tối ưu hóa trải nghiệm học tập trên Notion.
-- NGUYÊN TẮC CHUNG: Đảm bảo độ chính xác học thuật 100% cho mọi môn. Chỉ từ chối khéo léo khi gặp câu hỏi chính trị nhạy cảm sâu sắc.
+  1. Khi hỏi về Tin học (Lập trình Python, thuật toán, tư duy máy tính, cơ sở dữ liệu, cấu hình Notion), bạn phải đóng vai là một Chuyên gia Công nghệ Thông tin kiêm Sư phạm xuất sắc. 
+  2. Cung cấp mã nguồn Python chuẩn chỉnh, tối ưu, có comment giải thích chi tiết từng dòng.
+- NGUYÊN TẮC CHUNG: Đảm bảo độ chính xác học thuật 100%. Chỉ từ chối khéo léo khi gặp câu hỏi chính trị nhạy cảm sâu sắc.
 - TUYỆT ĐỐI KHÔNG hiển thị các bước suy nghĩ nội bộ.
 """
-
-if "GROQ_API_KEY" in st.secrets:
-    client = Groq(api_key=st.secrets["GROQ_API_KEY"])
-else:
-    st.error("⚠️ Chưa cài GROQ_API_KEY trong phần Secrets của Streamlit!")
-    st.stop()
 
 def generate_ai_response(current_messages):
     tz_vn = timezone(timedelta(hours=7))
@@ -128,7 +135,7 @@ def generate_ai_response(current_messages):
     return chat_completion.choices[0].message.content
 
 # ==========================================
-# 5. KHUNG HỘI THOẠI MAIN
+# 6. KHUNG HỘI THOẠI MAIN
 # ==========================================
 current_chat = st.session_state.chats[st.session_state.active_chat_id]
 current_messages = current_chat["messages"]
@@ -154,4 +161,4 @@ if prompt := st.chat_input("Nhắn tin cho mình ở đây nha... ⌨️"):
                 st.markdown(answer)
                 current_messages.append({"role": "assistant", "content": answer})
             except Exception as e:
-                st.error(f"⚠️ Ôi lỗi kết nối: {e}")
+                st.error(f"⚠️ Ôi lỗi kết nối API: {e}")
